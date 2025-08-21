@@ -12,7 +12,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearch, onClearCache }) => (
       {/* Left Section: Title */}
       <div className="flex-shrink-0">
         <h1 className="text-xl font-bold text-white">
-          EDMS <span className="text-red-500">Media</span>
+          EDMS <span className="text-red-500">Media</span> <span className="text-slate-500">POC</span>
         </h1>
       </div>
 

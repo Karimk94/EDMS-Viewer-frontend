@@ -18,7 +18,13 @@ export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, on
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const originalImageBlob = useRef<Blob | null>(null);
+  const [modalTitle, setModalTitle] = useState(doc.title);
 
+  useEffect(() => {
+    // This effect ensures the modal's internal title state is always in sync with the external doc prop
+    setModalTitle(doc.title);
+  }, [doc.title]);
+  
   useEffect(() => {
     const fetchImage = async () => {
       try {
@@ -61,7 +67,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, on
       <div className="bg-[#282828] text-gray-200 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="p-6 relative">
           <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl">&times;</button>
-          <h2 className="text-xl font-bold text-white mb-4">{doc.title}</h2>
+          <h2 className="text-xl font-bold text-white mb-4">{modalTitle}</h2>
           
           {isLoading && <Loader />}
           {error && <p className="text-center p-10 text-red-400">{error}</p>}

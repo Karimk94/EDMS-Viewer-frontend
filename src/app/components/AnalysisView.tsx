@@ -78,7 +78,9 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
       });
       if (!response.ok) throw new Error((await response.json()).error);
       const data = await response.json();
-      onUpdateAbstractSuccess(docId, data.abstract);
+      // Ensure the new abstract is not an empty string
+      const newAbstract = data.abstract || namesToSave.join(', ');
+      onUpdateAbstractSuccess(docId, newAbstract);
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     } finally {
