@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+📚 EDMS Viewer Frontend
+This is the frontend application for a modern Electronic Document Management System (EDMS). It's built with Next.js, React, and TypeScript, leveraging Tailwind CSS for a clean, responsive, and customizable user interface.
 
-## Getting Started
+The application serves as a comprehensive viewer for documents and media, providing a seamless user experience for browsing, searching, and analyzing content.
 
-First, run the development server:
+✨ Features
+Responsive Document Grid: A dynamically-loading, paginated grid view that adapts to any screen size.
 
-```bash
+Intuitive Search: Instantly search documents by title or other metadata.
+
+High-Resolution Viewing: Open documents in a full-screen modal to view high-resolution images.
+
+AI-Powered Face Analysis: Utilize an external service to detect and identify faces within documents.
+
+Abstract Management: Easily update document abstracts with newly identified names, ensuring metadata is always up-to-date.
+
+Seamless Data Flow: The application is designed to automatically refresh content after data updates, ensuring a real-time view of your document library.
+
+🚀 Getting Started
+To run this project locally, ensure you have the required backend services running (the EDMS API and the face recognition service).
+
+Clone the repository and install dependencies:
+
+git clone https://github.com/your-username/edms-viewer-frontend.git
+cd edms-viewer-frontend
+npm install
+
+Start the development server:
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Access the application:
+Open your browser and navigate to http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+🌐 API Endpoints
+This frontend application communicates with the following backend services, which are assumed to be running on your local machine:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+EDMS API: http://127.0.0.1:5000
 
-## Learn More
+Face Recognition Service: http://127.0.0.1:5002
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Ensure these services are active before running the frontend to avoid connection errors.

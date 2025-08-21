@@ -7,12 +7,13 @@ interface ImageModalProps {
   doc: Document;
   onClose: () => void;
   apiURL: string;
+  onUpdateAbstractSuccess: (docId: number, newAbstract: string) => void;
 }
 
-export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL }) => {
+export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, onUpdateAbstractSuccess }) => {
   const [view, setView] = useState<'image' | 'analysis'>('image');
   const [isLoading, setIsLoading] = useState(true);
-  const [isAnalyzing, setIsAnalyzing] = useState(false); // State for analysis button
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +87,12 @@ export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL }) 
           )}
 
           {view === 'analysis' && analysisResult && !error && (
-            <AnalysisView result={analysisResult} docId={doc.doc_id} apiURL={apiURL} />
+            <AnalysisView 
+              result={analysisResult} 
+              docId={doc.doc_id} 
+              apiURL={apiURL}
+              onUpdateAbstractSuccess={onUpdateAbstractSuccess}
+            />
           )}
         </div>
       </div>

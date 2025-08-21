@@ -4,9 +4,10 @@ interface AnalysisViewProps {
   result: any;
   docId: number;
   apiURL: string;
+  onUpdateAbstractSuccess: (docId: number, newAbstract: string) => void;
 }
 
-export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiURL }) => {
+export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiURL, onUpdateAbstractSuccess }) => {
   const [faceNames, setFaceNames] = useState<{ [key: number]: string }>({});
   const [isUpdating, setIsUpdating] = useState(false);
   const [savingFaceIndex, setSavingFaceIndex] = useState<number | null>(null);
@@ -27,7 +28,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
     setFaceNames(prev => ({ ...prev, [index]: name }));
   };
 
-  // --- NEW: Function to remove a name by its index ---
   const handleRemoveName = (faceIndexToRemove: number) => {
     setFaceNames(prev => {
       const newFaceNames = { ...prev };
@@ -67,7 +67,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
   const handleUpdateAbstract = async () => {
     const namesToSave = confirmedNames.map(([_, name]) => name.trim());
     if (namesToSave.length === 0) return alert("No confirmed names to update.");
-    if (!confirm(`Update abstract with: ${namesToSave.join(', ')}?`)) return;
+    if (!confirm(`Update title with: ${namesToSave.join(', ')}?`)) return;
 
     setIsUpdating(true);
     try {
@@ -77,7 +77,8 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
         body: JSON.stringify({ doc_id: docId, names: namesToSave }),
       });
       if (!response.ok) throw new Error((await response.json()).error);
-      alert('Abstract updated successfully!');
+      const data = await response.json();
+      onUpdateAbstractSuccess(docId, data.abstract);
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     } finally {
@@ -118,7 +119,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
                   )}
                 </button>
               </div>
-              {/* --- UPDATED: Display distance if available --- */}
               {face.distance !== null && face.name !== 'Unknown' && (
                 <div className="mt-2 text-right text-xs text-gray-400">
                   Match Distance: <span className="font-mono text-green-400">{face.distance?.toFixed(4)}</span> (lower is better)
@@ -131,9 +131,8 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
 
       {confirmedNames.length > 0 && (
         <div className="p-4 bg-[#1f1f1f] rounded-lg">
-          <h4 className="font-semibold text-gray-300 mb-2">Confirmed VIPs to be Saved to Abstract:</h4>
+          <h4 className="font-semibold text-gray-300 mb-2">Confirmed VIPs to be Saved to title:</h4>
           <div className="flex flex-wrap gap-2">
-            {/* --- UPDATED: Name tags with remove button --- */}
             {confirmedNames.map(([index, name]) => (
               <span key={index} className="flex items-center px-3 py-1 bg-green-600 text-white text-sm font-medium rounded-full">
                 {name}
@@ -164,7 +163,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
           ) : (
-            'Save Confirmed Names to Abstract'
+            'Save Confirmed Names to Title'
           )}
         </button>
       </div>

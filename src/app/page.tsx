@@ -15,6 +15,7 @@ export default function HomePage() {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
 
   const FLASK_API_URL = 'http://127.0.0.1:5000';
 
@@ -41,7 +42,7 @@ export default function HomePage() {
       }
     };
     fetchDocuments();
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, refreshKey]); // Add refreshKey to dependency array
 
   const handleSearch = (newSearchTerm: string) => {
     setSearchTerm(newSearchTerm);
@@ -53,11 +54,17 @@ export default function HomePage() {
     try {
       await fetch(`${FLASK_API_URL}/api/clear_cache`, { method: 'POST' });
       alert('Thumbnail cache cleared.');
-      setSearchTerm(prev => prev + ' ');
-      setSearchTerm(searchTerm);
+      setRefreshKey(prevKey => prevKey + 1); // Trigger re-fetch
     } catch (err) {
       alert('Failed to clear cache.');
     }
+  };
+
+  const handleUpdateAbstractSuccess = (docId: number, newAbstract: string) => {
+    // Update the selected document to refresh the modal's content
+    setSelectedDoc(prevDoc => prevDoc ? { ...prevDoc, abstract: newAbstract } : null);
+    // Increment the refreshKey to trigger a full re-fetch of the documents list
+    setRefreshKey(prevKey => prevKey + 1);
   };
 
   return (
@@ -90,6 +97,7 @@ export default function HomePage() {
           doc={selectedDoc} 
           onClose={() => setSelectedDoc(null)} 
           apiURL={FLASK_API_URL}
+          onUpdateAbstractSuccess={handleUpdateAbstractSuccess}
         />
       )}
     </div>
