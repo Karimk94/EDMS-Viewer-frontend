@@ -14,12 +14,13 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
 
   const FLASK_API_URL = 'http://127.0.0.1:5000';
 
-  
   useEffect(() => {
     const fetchDocuments = async () => {
       setIsLoading(true);
@@ -28,6 +29,8 @@ export default function HomePage() {
         const url = new URL(`${FLASK_API_URL}/api/documents`);
         url.searchParams.append('page', String(currentPage));
         if (searchTerm) url.searchParams.append('search', searchTerm);
+        if (dateFrom) url.searchParams.append('date_from', dateFrom.replace('T', ' '));
+        if (dateTo) url.searchParams.append('date_to', dateTo.replace('T', ' '));
         
         const response = await fetch(url);
         if (!response.ok) throw new Error('Network response was not ok.');
@@ -42,7 +45,7 @@ export default function HomePage() {
       }
     };
     fetchDocuments();
-  }, [currentPage, searchTerm, refreshKey]);
+  }, [currentPage, searchTerm, dateFrom, dateTo, refreshKey]);
 
   const handleSearch = (newSearchTerm: string) => {
     setSearchTerm(newSearchTerm);
@@ -54,7 +57,7 @@ export default function HomePage() {
     try {
       await fetch(`${FLASK_API_URL}/api/clear_cache`, { method: 'POST' });
       alert('Thumbnail cache cleared.');
-      setRefreshKey(prevKey => prevKey + 1); // Trigger re-fetch
+      setRefreshKey(prevKey => prevKey + 1);
     } catch (err) {
       alert('Failed to clear cache.');
     }
@@ -69,7 +72,14 @@ export default function HomePage() {
 
   return (
     <div>
-      <Header onSearch={handleSearch} onClearCache={handleClearCache} />
+      <Header 
+        onSearch={handleSearch} 
+        onClearCache={handleClearCache}
+        dateFrom={dateFrom}
+        setDateFrom={setDateFrom}
+        dateTo={dateTo}
+        setDateTo={setDateTo}
+      />
       <main className="px-4 sm:px-6 lg:px-8 py-8">
         {isLoading && <Loader />}
         {error && <p className="text-center text-red-400">{error}</p>}
