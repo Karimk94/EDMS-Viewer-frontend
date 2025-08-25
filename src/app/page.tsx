@@ -7,6 +7,20 @@ import { Pagination } from './components/Pagination';
 import { ImageModal } from './components/ImageModal';
 import { Loader } from './components/Loader';
 
+// Helper function to format dates for the API
+const formatToApiDate = (date: Date | undefined | null): string => {
+  if (!date) return '';
+  // Converts to YYYY-MM-DD HH:mm:ss format, which the API expects
+  const pad = (num: number) => num.toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
 export default function HomePage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -14,8 +28,8 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [dateFrom, setDateFrom] = useState<string>('');
-  const [dateTo, setDateTo] = useState<string>('');
+  const [dateFrom, setDateFrom] = useState<Date | null>(null);
+  const [dateTo, setDateTo] = useState<Date | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
 
@@ -29,12 +43,16 @@ export default function HomePage() {
         const url = new URL(`${FLASK_API_URL}/api/documents`);
         url.searchParams.append('page', String(currentPage));
         if (searchTerm) url.searchParams.append('search', searchTerm);
-        if (dateFrom) url.searchParams.append('date_from', dateFrom.replace('T', ' '));
-        if (dateTo) url.searchParams.append('date_to', dateTo.replace('T', ' '));
-        
+
+        const formattedDateFrom = formatToApiDate(dateFrom);
+        if (formattedDateFrom) url.searchParams.append('date_from', formattedDateFrom);
+
+        const formattedDateTo = formatToApiDate(dateTo);
+        if (formattedDateTo) url.searchParams.append('date_to', formattedDateTo);
+
         const response = await fetch(url);
         if (!response.ok) throw new Error('Network response was not ok.');
-        
+
         const data = await response.json();
         setDocuments(data.documents);
         setTotalPages(data.total_pages);
@@ -72,8 +90,8 @@ export default function HomePage() {
 
   return (
     <div>
-      <Header 
-        onSearch={handleSearch} 
+      <Header
+        onSearch={handleSearch}
         onClearCache={handleClearCache}
         dateFrom={dateFrom}
         setDateFrom={setDateFrom}
@@ -86,26 +104,26 @@ export default function HomePage() {
         {!isLoading && !error && (
           <>
             {documents.length > 0 ? (
-              <DocumentList 
-                documents={documents} 
-                onDocumentClick={setSelectedDoc} 
-                apiURL={FLASK_API_URL} 
+              <DocumentList
+                documents={documents}
+                onDocumentClick={setSelectedDoc}
+                apiURL={FLASK_API_URL}
               />
             ) : (
               <p className="text-center text-gray-400">No documents found.</p>
             )}
-            <Pagination 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
-              onPageChange={setCurrentPage} 
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
             />
           </>
         )}
       </main>
       {selectedDoc && (
-        <ImageModal 
-          doc={selectedDoc} 
-          onClose={() => setSelectedDoc(null)} 
+        <ImageModal
+          doc={selectedDoc}
+          onClose={() => setSelectedDoc(null)}
           apiURL={FLASK_API_URL}
           onUpdateAbstractSuccess={handleUpdateAbstractSuccess}
         />
