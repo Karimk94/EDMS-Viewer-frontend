@@ -4,10 +4,11 @@ interface AnalysisViewProps {
   result: any;
   docId: number;
   apiURL: string;
+  faceRecogURL: string;
   onUpdateAbstractSuccess: (docId: number, newAbstract: string) => void;
 }
 
-export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiURL, onUpdateAbstractSuccess }) => {
+export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiURL, faceRecogURL, onUpdateAbstractSuccess }) => {
   const [faceNames, setFaceNames] = useState<{ [key: number]: string }>({});
   const [isUpdating, setIsUpdating] = useState(false);
   const [savingFaceIndex, setSavingFaceIndex] = useState<number | null>(null);
@@ -44,7 +45,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
     }
     setSavingFaceIndex(face.index);
     try {
-      const response = await fetch(`http://127.0.0.1:5002/add_face`, {
+      const response = await fetch(`${faceRecogURL}/add_face`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -55,6 +56,18 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
       });
       if (!response.ok) throw new Error('Failed to save face to the recognition service.');
       alert(`Successfully saved "${name.trim()}" to the known faces database.`);
+
+      const saveNameResponse = await fetch(`${apiURL}/api/add_person`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim() }),
+      });
+
+      if (!saveNameResponse.ok) {
+        const errorData = await saveNameResponse.json();
+        throw new Error(errorData.error || 'Failed to save name to the database.');
+      }
+
     } catch (error: any) {
       alert(`Error: ${error.message}`);
     } finally {

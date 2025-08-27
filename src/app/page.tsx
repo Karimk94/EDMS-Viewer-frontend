@@ -34,6 +34,7 @@ export default function HomePage() {
   const [refreshKey, setRefreshKey] = useState<number>(0);
 
   const FLASK_API_URL = 'http://127.0.0.1:5000';
+  const FACE_RECOG_URL = 'http://127.0.0.1:5002';
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -108,6 +109,7 @@ export default function HomePage() {
                 documents={documents}
                 onDocumentClick={setSelectedDoc}
                 apiURL={FLASK_API_URL}
+                faceRecogURL={FACE_RECOG_URL}
               />
             ) : (
               <p className="text-center text-gray-400">No documents found.</p>
@@ -125,6 +127,7 @@ export default function HomePage() {
           doc={selectedDoc}
           onClose={() => setSelectedDoc(null)}
           apiURL={FLASK_API_URL}
+          faceRecogURL={FACE_RECOG_URL}
           onUpdateAbstractSuccess={handleUpdateAbstractSuccess}
         />
       )}

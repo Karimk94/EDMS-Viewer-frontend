@@ -7,10 +7,11 @@ interface ImageModalProps {
   doc: Document;
   onClose: () => void;
   apiURL: string;
+  faceRecogURL: string;
   onUpdateAbstractSuccess: (docId: number, newAbstract: string) => void;
 }
 
-export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, onUpdateAbstractSuccess }) => {
+export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, faceRecogURL, onUpdateAbstractSuccess }) => {
   const [view, setView] = useState<'image' | 'analysis'>('image');
   const [isLoading, setIsLoading] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -51,7 +52,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, on
     formData.append('image_file', originalImageBlob.current, `${doc.doc_id}.jpg`);
 
     try {
-      const response = await fetch(`http://127.0.0.1:5002/analyze_image`, { method: 'POST', body: formData });
+      const response = await fetch(`${faceRecogURL}/analyze_image`, { method: 'POST', body: formData });
       if (!response.ok) throw new Error((await response.json()).error || 'Analysis failed.');
       setAnalysisResult(await response.json());
       setView('analysis');
@@ -97,6 +98,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, on
               result={analysisResult} 
               docId={doc.doc_id} 
               apiURL={apiURL}
+              faceRecogURL={faceRecogURL}
               onUpdateAbstractSuccess={onUpdateAbstractSuccess}
             />
           )}
