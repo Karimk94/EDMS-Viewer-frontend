@@ -7,10 +7,13 @@ import { Pagination } from './components/Pagination';
 import { ImageModal } from './components/ImageModal';
 import { Loader } from './components/Loader';
 
-// Helper function to format dates for the API
-const formatToApiDate = (date: Date | undefined | null): string => {
+interface PersonOption {
+  value: number;
+  label: string;
+}
+
+const formatToApiDate = (date: Date | null): string => {
   if (!date) return '';
-  // Converts to YYYY-MM-DD HH:mm:ss format, which the API expects
   const pad = (num: number) => num.toString().padStart(2, '0');
   const year = date.getFullYear();
   const month = pad(date.getMonth() + 1);
@@ -30,11 +33,13 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
+  const [selectedPerson, setSelectedPerson] = useState<PersonOption | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
 
   const FLASK_API_URL = 'http://127.0.0.1:5000';
   const FACE_RECOG_URL = 'http://127.0.0.1:5002';
+
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -43,17 +48,21 @@ export default function HomePage() {
       try {
         const url = new URL(`${FLASK_API_URL}/api/documents`);
         url.searchParams.append('page', String(currentPage));
-        if (searchTerm) url.searchParams.append('search', searchTerm);
 
+        const personSearchTerm = selectedPerson ? selectedPerson.label.split(' - ')[0] : '';
+        const combinedSearchTerm = `${searchTerm} ${personSearchTerm}`.trim();
+
+        if (combinedSearchTerm) url.searchParams.append('search', combinedSearchTerm);
+        
         const formattedDateFrom = formatToApiDate(dateFrom);
         if (formattedDateFrom) url.searchParams.append('date_from', formattedDateFrom);
 
         const formattedDateTo = formatToApiDate(dateTo);
         if (formattedDateTo) url.searchParams.append('date_to', formattedDateTo);
-
+        
         const response = await fetch(url);
         if (!response.ok) throw new Error('Network response was not ok.');
-
+        
         const data = await response.json();
         setDocuments(data.documents);
         setTotalPages(data.total_pages);
@@ -64,7 +73,7 @@ export default function HomePage() {
       }
     };
     fetchDocuments();
-  }, [currentPage, searchTerm, dateFrom, dateTo, refreshKey]);
+  }, [currentPage, searchTerm, dateFrom, dateTo, selectedPerson, refreshKey]);
 
   const handleSearch = (newSearchTerm: string) => {
     setSearchTerm(newSearchTerm);
@@ -91,13 +100,16 @@ export default function HomePage() {
 
   return (
     <div>
-      <Header
-        onSearch={handleSearch}
+      <Header 
+        onSearch={handleSearch} 
         onClearCache={handleClearCache}
         dateFrom={dateFrom}
         setDateFrom={setDateFrom}
         dateTo={dateTo}
         setDateTo={setDateTo}
+        selectedPerson={selectedPerson}
+        setSelectedPerson={setSelectedPerson}
+        apiURL={FLASK_API_URL}
       />
       <main className="px-4 sm:px-6 lg:px-8 py-8">
         {isLoading && <Loader />}
@@ -105,27 +117,27 @@ export default function HomePage() {
         {!isLoading && !error && (
           <>
             {documents.length > 0 ? (
-              <DocumentList
-                documents={documents}
-                onDocumentClick={setSelectedDoc}
-                apiURL={FLASK_API_URL}
-                faceRecogURL={FACE_RECOG_URL}
+              <DocumentList 
+                documents={documents} 
+                onDocumentClick={setSelectedDoc} 
+                apiURL={FLASK_API_URL} 
+                faceRecogURL={FACE_RECOG_URL} 
               />
             ) : (
               <p className="text-center text-gray-400">No documents found.</p>
             )}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={setCurrentPage} 
             />
           </>
         )}
       </main>
       {selectedDoc && (
-        <ImageModal
-          doc={selectedDoc}
-          onClose={() => setSelectedDoc(null)}
+        <ImageModal 
+          doc={selectedDoc} 
+          onClose={() => setSelectedDoc(null)} 
           apiURL={FLASK_API_URL}
           faceRecogURL={FACE_RECOG_URL}
           onUpdateAbstractSuccess={handleUpdateAbstractSuccess}
