@@ -87,12 +87,19 @@ interface AdvancedFiltersProps {
   setDateFrom: (date: Date | null) => void;
   dateTo: Date | null;
   setDateTo: (date: Date | null) => void;
-  selectedPerson: PersonOption | null;
-  setSelectedPerson: (person: PersonOption | null) => void;
+  selectedPerson: PersonOption[] | null;
+  setSelectedPerson: (person: PersonOption[] | null) => void;
+  personCondition: 'any' | 'all';
+  setPersonCondition: (condition: 'any' | 'all') => void;
   apiURL: string;
 }
 
-export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({ dateFrom, setDateFrom, dateTo, setDateTo, selectedPerson, setSelectedPerson, apiURL }) => {
+export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({ 
+    dateFrom, setDateFrom, dateTo, setDateTo, 
+    selectedPerson, setSelectedPerson, 
+    personCondition, setPersonCondition,
+    apiURL 
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -108,7 +115,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({ dateFrom, setD
     };
   }, [wrapperRef]);
   
-  const activeFilterCount = [dateFrom, dateTo, selectedPerson].filter(Boolean).length;
+  const activeFilterCount = [dateFrom, dateTo, selectedPerson && selectedPerson.length > 0].filter(Boolean).length;
 
   const loadPersonOptions = async (
     search: string,
@@ -168,41 +175,55 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({ dateFrom, setD
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Person</label>
               <AsyncPaginate
+                isMulti
                 value={selectedPerson}
                 loadOptions={loadPersonOptions}
-                onChange={setSelectedPerson}
+                onChange={(value) => setSelectedPerson(value as PersonOption[])}
                 isClearable
                 placeholder="Search for a person..."
                 additional={{
                   page: 1,
                 }}
                 styles={{
-                  control: (base) => ({
-                    ...base,
-                    backgroundColor: '#121212',
-                    borderColor: '#4b5563',
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    backgroundColor: '#282828',
-                  }),
-                  option: (base, { isFocused }) => ({
-                    ...base,
-                    backgroundColor: isFocused ? '#4b5563' : '#282828',
-                    color: '#e2e8f0',
-                  }),
-                  singleValue: (base) => ({
-                    ...base,
-                    color: '#e2e8f0',
-                  }),
-                  input: (base) => ({
-                    ...base,
-                    color: '#e2e8f0',
-                  }),
+                  control: (base) => ({ ...base, backgroundColor: '#121212', borderColor: '#4b5563' }),
+                  menu: (base) => ({ ...base, backgroundColor: '#282828' }),
+                  option: (base, { isFocused }) => ({ ...base, backgroundColor: isFocused ? '#4b5563' : '#282828', color: '#e2e8f0' }),
+                  multiValue: (base) => ({ ...base, backgroundColor: '#4b5563' }),
+                  multiValueLabel: (base) => ({ ...base, color: '#e2e8f0' }),
+                  singleValue: (base) => ({ ...base, color: '#e2e8f0' }),
+                  input: (base) => ({ ...base, color: '#e2e8f0' }),
                 }}
               />
+               {selectedPerson && selectedPerson.length > 1 && (
+                <div className="mt-2">
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Match Condition</label>
+                  <div className="flex rounded-md shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setPersonCondition('any')}
+                      className={`px-4 py-1 text-sm font-medium rounded-l-md w-1/2 transition ${
+                        personCondition === 'any'
+                          ? 'bg-red-600 text-white z-10 ring-1 ring-red-500'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      Any (OR)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPersonCondition('all')}
+                      className={`-ml-px px-4 py-1 text-sm font-medium rounded-r-md w-1/2 transition ${
+                        personCondition === 'all'
+                          ? 'bg-red-600 text-white z-10 ring-1 ring-red-500'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      All (AND)
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-
           </div>
 
           <div className="mt-6 text-right">

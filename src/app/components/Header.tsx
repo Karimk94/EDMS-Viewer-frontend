@@ -14,12 +14,20 @@ interface HeaderProps {
   setDateFrom: (date: Date | null) => void;
   dateTo: Date | null;
   setDateTo: (date: Date | null) => void;
-  selectedPerson: PersonOption | null;
-  setSelectedPerson: (person: PersonOption | null) => void;
+  selectedPerson: PersonOption[] | null;
+  setSelectedPerson: (person: PersonOption[] | null) => void;
+  personCondition: 'any' | 'all';
+  setPersonCondition: (condition: 'any' | 'all') => void;
   apiURL: string
 }
 
-export const Header: React.FC<HeaderProps> = ({ onSearch, onClearCache, dateFrom, setDateFrom, dateTo, setDateTo, selectedPerson, setSelectedPerson, apiURL }) => (
+export const Header: React.FC<HeaderProps> = ({ 
+  onSearch, onClearCache, 
+  dateFrom, setDateFrom, dateTo, setDateTo, 
+  selectedPerson, setSelectedPerson,
+  personCondition, setPersonCondition,
+  apiURL 
+}) => (
   <header className="sticky top-0 z-40 bg-[#212121] border-b border-gray-700 px-4 sm:px-6 lg:px-8">
     <div className="flex items-center justify-between h-16">
       <div className="flex-shrink-0">
@@ -39,6 +47,8 @@ export const Header: React.FC<HeaderProps> = ({ onSearch, onClearCache, dateFrom
           setDateTo={setDateTo}
           selectedPerson={selectedPerson}
           setSelectedPerson={setSelectedPerson}
+          personCondition={personCondition}
+          setPersonCondition={setPersonCondition}
           apiURL={apiURL}
         />
       </div>

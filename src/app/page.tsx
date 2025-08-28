@@ -33,13 +33,19 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
-  const [selectedPerson, setSelectedPerson] = useState<PersonOption | null>(null);
+  const [selectedPerson, setSelectedPerson] = useState<PersonOption[] | null>(null);
+  const [personCondition, setPersonCondition] = useState<'any' | 'all'>('any');
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
 
   const FLASK_API_URL = 'http://127.0.0.1:5000';
   const FACE_RECOG_URL = 'http://127.0.0.1:5002';
 
+  useEffect(() => {
+    if (selectedPerson && selectedPerson.length <= 1 && personCondition !== 'any') {
+      setPersonCondition('any');
+    }
+  }, [selectedPerson, personCondition]);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -49,10 +55,17 @@ export default function HomePage() {
         const url = new URL(`${FLASK_API_URL}/api/documents`);
         url.searchParams.append('page', String(currentPage));
 
-        const personSearchTerm = selectedPerson ? selectedPerson.label.split(' - ')[0] : '';
-        const combinedSearchTerm = `${searchTerm} ${personSearchTerm}`.trim();
-
-        if (combinedSearchTerm) url.searchParams.append('search', combinedSearchTerm);
+        if (searchTerm) {
+          url.searchParams.append('search', searchTerm);
+        }
+        
+        if (selectedPerson && selectedPerson.length > 0) {
+            const personNames = selectedPerson.map(p => p.label.split(' - ')[0]).join(',');
+            url.searchParams.append('persons', personNames);
+            if (selectedPerson.length > 1) {
+              url.searchParams.append('person_condition', personCondition);
+            }
+        }
         
         const formattedDateFrom = formatToApiDate(dateFrom);
         if (formattedDateFrom) url.searchParams.append('date_from', formattedDateFrom);
@@ -73,7 +86,7 @@ export default function HomePage() {
       }
     };
     fetchDocuments();
-  }, [currentPage, searchTerm, dateFrom, dateTo, selectedPerson, refreshKey]);
+  }, [currentPage, searchTerm, dateFrom, dateTo, selectedPerson, personCondition, refreshKey]);
 
   const handleSearch = (newSearchTerm: string) => {
     setSearchTerm(newSearchTerm);
@@ -109,6 +122,8 @@ export default function HomePage() {
         setDateTo={setDateTo}
         selectedPerson={selectedPerson}
         setSelectedPerson={setSelectedPerson}
+        personCondition={personCondition}
+        setPersonCondition={setPersonCondition}
         apiURL={FLASK_API_URL}
       />
       <main className="px-4 sm:px-6 lg:px-8 py-8">
