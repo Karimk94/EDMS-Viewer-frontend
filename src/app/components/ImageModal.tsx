@@ -22,7 +22,6 @@ export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, fa
   const [modalTitle, setModalTitle] = useState(doc.title);
 
   useEffect(() => {
-    // This effect ensures the modal's internal title state is always in sync with the external doc prop
     setModalTitle(doc.title);
   }, [doc.title]);
   
@@ -76,20 +75,22 @@ export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, fa
           {view === 'image' && imageSrc && !error && (
             <div className="text-center">
               <img src={imageSrc} alt="Document" className="max-w-full max-h-[60vh] mx-auto rounded-lg" />
-              <button 
-                onClick={handleAnalyze} 
-                disabled={isAnalyzing}
-                className="mt-6 px-8 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition w-64 h-14 flex items-center justify-center mx-auto disabled:bg-red-800 disabled:cursor-not-allowed"
-              >
-                {isAnalyzing ? (
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  'Analyze for Faces'
-                )}
-              </button>
+              {doc.media_type === 'image' && (
+                <button 
+                  onClick={handleAnalyze} 
+                  disabled={isAnalyzing}
+                  className="mt-6 px-8 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition w-64 h-14 flex items-center justify-center mx-auto disabled:bg-red-800 disabled:cursor-not-allowed"
+                >
+                  {isAnalyzing ? (
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    'Analyze for Faces'
+                  )}
+                </button>
+              )}
             </div>
           )}
 

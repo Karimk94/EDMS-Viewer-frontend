@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { DocumentList, Document } from './components/DocumentList';
 import { Pagination } from './components/Pagination';
 import { ImageModal } from './components/ImageModal';
+import { VideoModal } from './components/VideoModal';
 import { Loader } from './components/Loader';
 
 interface PersonOption {
@@ -36,6 +37,7 @@ export default function HomePage() {
   const [selectedPerson, setSelectedPerson] = useState<PersonOption[] | null>(null);
   const [personCondition, setPersonCondition] = useState<'any' | 'all'>('any');
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<Document | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
 
   const FLASK_API_URL = 'http://127.0.0.1:5000';
@@ -111,6 +113,14 @@ export default function HomePage() {
     setRefreshKey(prevKey => prevKey + 1);
   };
 
+  const handleDocumentClick = (doc: Document) => {
+    if (doc.media_type === 'video') {
+      setSelectedVideo(doc);
+    } else {
+      setSelectedDoc(doc);
+    }
+  };
+
   return (
     <div>
       <Header 
@@ -134,7 +144,7 @@ export default function HomePage() {
             {documents.length > 0 ? (
               <DocumentList 
                 documents={documents} 
-                onDocumentClick={setSelectedDoc} 
+                onDocumentClick={handleDocumentClick} 
                 apiURL={FLASK_API_URL} 
                 faceRecogURL={FACE_RECOG_URL} 
               />
@@ -156,6 +166,13 @@ export default function HomePage() {
           apiURL={FLASK_API_URL}
           faceRecogURL={FACE_RECOG_URL}
           onUpdateAbstractSuccess={handleUpdateAbstractSuccess}
+        />
+      )}
+      {selectedVideo && (
+        <VideoModal
+          doc={selectedVideo}
+          onClose={() => setSelectedVideo(null)}
+          apiURL={FLASK_API_URL}
         />
       )}
     </div>
