@@ -8,7 +8,7 @@ export interface Document {
   docname: string;
   date: string;
   thumbnail_url: string;
-  media_type: 'image' | 'video';
+  media_type: 'image' | 'video' | 'pdf';
 }
 
 interface DocumentListProps {
@@ -39,6 +39,15 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDocumen
                 src="/play-icon.svg" 
                 alt="Play Video" 
                 className="w-12 h-12 opacity-80 group-hover:opacity-100 transition-transform group-hover:scale-110" 
+              />
+            </div>
+          )}
+          {doc.media_type === 'pdf' && (
+            <div className="absolute top-2 right-2 bg-white bg-opacity-70 rounded-full p-1 pointer-events-none">
+              <img 
+                src="/file.svg" 
+                alt="PDF Icon" 
+                className="w-4 h-4" 
               />
             </div>
           )}

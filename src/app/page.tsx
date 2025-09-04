@@ -6,6 +6,7 @@ import { DocumentList, Document } from './components/DocumentList';
 import { Pagination } from './components/Pagination';
 import { ImageModal } from './components/ImageModal';
 import { VideoModal } from './components/VideoModal';
+import { PdfModal } from './components/PdfModal';
 import { Loader } from './components/Loader';
 
 interface PersonOption {
@@ -38,6 +39,7 @@ export default function HomePage() {
   const [personCondition, setPersonCondition] = useState<'any' | 'all'>('any');
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Document | null>(null);
+  const [selectedPdf, setSelectedPdf] = useState<Document | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
 
   const FLASK_API_URL = 'http://127.0.0.1:5000';
@@ -116,6 +118,8 @@ export default function HomePage() {
   const handleDocumentClick = (doc: Document) => {
     if (doc.media_type === 'video') {
       setSelectedVideo(doc);
+    } else if (doc.media_type === 'pdf') {
+      setSelectedPdf(doc);
     } else {
       setSelectedDoc(doc);
     }
@@ -172,6 +176,13 @@ export default function HomePage() {
         <VideoModal
           doc={selectedVideo}
           onClose={() => setSelectedVideo(null)}
+          apiURL={FLASK_API_URL}
+        />
+      )}
+      {selectedPdf && (
+        <PdfModal
+          doc={selectedPdf}
+          onClose={() => setSelectedPdf(null)}
           apiURL={FLASK_API_URL}
         />
       )}
