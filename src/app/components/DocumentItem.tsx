@@ -17,10 +17,11 @@ interface DocumentItemProps {
     doc: Document;
     onDocumentClick: (doc: Document) => void;
     apiURL: string;
+    onTagSelect: (tag: string) => void;
 }
 
 // This component renders a single document card
-export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick, apiURL }) => {
+export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick, apiURL, onTagSelect }) => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -65,6 +66,10 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
     }
   };
 
+  const handleTagClick = (e: React.MouseEvent, tag: string) => {
+    e.stopPropagation(); // Prevent card click
+    onTagSelect(tag);
+  };
 
   return (
     <div 
@@ -98,9 +103,9 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
           <div className="relative mt-1">
             <div className="flex flex-wrap">
               {visibleTags.map((tag, index) => (
-                <span key={index} className="bg-gray-200 text-black text-xs font-medium mr-1 mb-1 px-2 py-0.5 rounded-md">
+                <button key={index} onClick={(e) => handleTagClick(e, tag)} className="bg-gray-200 text-black text-xs font-medium mr-1 mb-1 px-2 py-0.5 rounded-md hover:bg-gray-300">
                   {tag}
-                </span>
+                </button>
               ))}
               {hasOverflow && (
                 <button
@@ -124,9 +129,9 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
               >
                 <div className="flex flex-wrap">
                   {doc.tags.map((tag, index) => (
-                    <span key={index} className="bg-gray-200 text-black text-xs font-medium mr-1 mb-1 px-2 py-0.5 rounded-md">
+                    <button key={index} onClick={(e) => handleTagClick(e, tag)} className="bg-gray-200 text-black text-xs font-medium mr-1 mb-1 px-2 py-0.5 rounded-md hover:bg-gray-300">
                       {tag}
-                    </span>
+                    </button>
                   ))}
                 </div>
               </div>

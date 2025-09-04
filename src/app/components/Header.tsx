@@ -1,6 +1,7 @@
 import React from 'react';
 import { SearchBar } from './SearchBar';
 import { AdvancedFilters } from './AdvancedFilters'; 
+import { TagFilter } from './TagFilter';
 
 interface PersonOption {
   value: number;
@@ -18,6 +19,8 @@ interface HeaderProps {
   setSelectedPerson: (person: PersonOption[] | null) => void;
   personCondition: 'any' | 'all';
   setPersonCondition: (condition: 'any' | 'all') => void;
+  selectedTags: string[];
+  setSelectedTags: (tags: string[]) => void;
   apiURL: string
 }
 
@@ -26,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   dateFrom, setDateFrom, dateTo, setDateTo, 
   selectedPerson, setSelectedPerson,
   personCondition, setPersonCondition,
+  selectedTags, setSelectedTags,
   apiURL 
 }) => (
   <header className="sticky top-0 z-40 bg-[#212121] border-b border-gray-700 px-4 sm:px-6 lg:px-8">
@@ -40,6 +44,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="w-full max-w-md">
           <SearchBar onSearch={onSearch} />
         </div>
+        <TagFilter 
+          apiURL={apiURL}
+          selectedTags={selectedTags}
+          setSelectedTags={setSelectedTags}
+        />
         <AdvancedFilters
           dateFrom={dateFrom}
           setDateFrom={setDateFrom}

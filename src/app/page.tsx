@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
-import { DocumentList, Document } from './components/DocumentList';
+import { DocumentList } from './components/DocumentList';
 import { Pagination } from './components/Pagination';
 import { ImageModal } from './components/ImageModal';
 import { VideoModal } from './components/VideoModal';
 import { PdfModal } from './components/PdfModal';
 import { Loader } from './components/Loader';
+import { Document } from './components/DocumentItem';
 
 interface PersonOption {
   value: number;
@@ -37,6 +38,7 @@ export default function HomePage() {
   const [dateTo, setDateTo] = useState<Date | null>(null);
   const [selectedPerson, setSelectedPerson] = useState<PersonOption[] | null>(null);
   const [personCondition, setPersonCondition] = useState<'any' | 'all'>('any');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Document | null>(null);
   const [selectedPdf, setSelectedPdf] = useState<Document | null>(null);
@@ -70,6 +72,10 @@ export default function HomePage() {
               url.searchParams.append('person_condition', personCondition);
             }
         }
+
+        if (selectedTags.length > 0) {
+          url.searchParams.append('tags', selectedTags.join(','));
+        }
         
         const formattedDateFrom = formatToApiDate(dateFrom);
         if (formattedDateFrom) url.searchParams.append('date_from', formattedDateFrom);
@@ -84,13 +90,13 @@ export default function HomePage() {
         setDocuments(data.documents);
         setTotalPages(data.total_pages);
       } catch (err) {
-        setError('Failed to fetch documents. Is the Python API running?');
+        setError('Failed to fetch documents. Is the API running?');
       } finally {
         setIsLoading(false);
       }
     };
     fetchDocuments();
-  }, [currentPage, searchTerm, dateFrom, dateTo, selectedPerson, personCondition, refreshKey]);
+  }, [currentPage, searchTerm, dateFrom, dateTo, selectedPerson, personCondition, selectedTags, refreshKey]);
 
   const handleSearch = (newSearchTerm: string) => {
     setSearchTerm(newSearchTerm);
@@ -124,6 +130,12 @@ export default function HomePage() {
       setSelectedDoc(doc);
     }
   };
+  
+  const handleTagSelect = (tag: string) => {
+    if (!selectedTags.includes(tag)) {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
 
   return (
     <div>
@@ -138,6 +150,8 @@ export default function HomePage() {
         setSelectedPerson={setSelectedPerson}
         personCondition={personCondition}
         setPersonCondition={setPersonCondition}
+        selectedTags={selectedTags}
+        setSelectedTags={setSelectedTags}
         apiURL={FLASK_API_URL}
       />
       <main className="px-4 sm:px-6 lg:px-8 py-8">
@@ -150,7 +164,8 @@ export default function HomePage() {
                 documents={documents} 
                 onDocumentClick={handleDocumentClick} 
                 apiURL={FLASK_API_URL} 
-                faceRecogURL={FACE_RECOG_URL} 
+                faceRecogURL={FACE_RECOG_URL}
+                onTagSelect={handleTagSelect}
               />
             ) : (
               <p className="text-center text-gray-400">No documents found.</p>
