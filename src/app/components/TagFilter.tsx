@@ -13,6 +13,7 @@ export const TagFilter: React.FC<TagFilterProps> = ({ apiURL, selectedTags, setS
   const [allTags, setAllTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [tagsFetched, setTagsFetched] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const wrapperRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -56,16 +57,20 @@ export const TagFilter: React.FC<TagFilterProps> = ({ apiURL, selectedTags, setS
     setSelectedTags(newSelectedTags);
   };
 
+  const filteredTags = useMemo(() => {
+    return allTags.filter(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [allTags, searchTerm]);
+
   const sortedTags = useMemo(() => {
     const selected = new Set(selectedTags);
-    return [...allTags].sort((a, b) => {
+    return [...filteredTags].sort((a, b) => {
       const aIsSelected = selected.has(a);
       const bIsSelected = selected.has(b);
       if (aIsSelected && !bIsSelected) return -1;
       if (!aIsSelected && bIsSelected) return 1;
       return a.localeCompare(b);
     });
-  }, [allTags, selectedTags]);
+  }, [filteredTags, selectedTags]);
 
   const handleScroll = () => {
     const container = scrollContainerRef.current;
@@ -95,6 +100,15 @@ export const TagFilter: React.FC<TagFilterProps> = ({ apiURL, selectedTags, setS
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 w-80 bg-[#282828] border border-gray-600 rounded-lg shadow-lg z-50 p-4">
           <h3 className="text-lg font-semibold text-white mb-4">Filter by Tags</h3>
+          <div className="relative mb-4">
+            <input
+              type="text"
+              placeholder="Search tags..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 bg-[#121212] text-gray-200 border border-gray-600 rounded-md focus:ring-2 focus:ring-red-500 focus:outline-none"
+            />
+          </div>
           {isLoading ? (
             <p className="text-gray-400">Loading tags...</p>
           ) : (
@@ -123,4 +137,3 @@ export const TagFilter: React.FC<TagFilterProps> = ({ apiURL, selectedTags, setS
     </div>
   );
 };
-

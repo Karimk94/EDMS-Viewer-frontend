@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-// Define the Document interface so it can be used in other components
 export interface Document {
   doc_id: number;
   title: string;
@@ -10,7 +9,7 @@ export interface Document {
   date: string;
   thumbnail_url: string;
   media_type: 'image' | 'video' | 'pdf';
-  tags: string[];
+  tags?: string[];
 }
 
 interface DocumentItemProps {
@@ -20,24 +19,45 @@ interface DocumentItemProps {
     onTagSelect: (tag: string) => void;
 }
 
-// This component renders a single document card
 export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick, apiURL, onTagSelect }) => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Logic to determine how many tags to show before creating a "+ more" button
+  const [itemTags, setItemTags] = useState<string[]>([]);
+  const [isLoadingTags, setIsLoadingTags] = useState(true);
+
+  useEffect(() => {
+    const fetchTags = async () => {
+      setIsLoadingTags(true);
+      try {
+        const response = await fetch(`${apiURL}/api/tags/${doc.doc_id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setItemTags(data.tags || []);
+        } else {
+          setItemTags([]);
+        }
+      } catch (error) {
+        console.error(`Failed to fetch tags for doc ${doc.doc_id}`, error);
+        setItemTags([]);
+      } finally {
+        setIsLoadingTags(false);
+      }
+    };
+    fetchTags();
+  }, [doc.doc_id, apiURL]);
+  
   const MAX_VISIBLE_TAGS = 4;
-  const hasOverflow = doc.tags.length > MAX_VISIBLE_TAGS;
+  const hasOverflow = itemTags.length > MAX_VISIBLE_TAGS;
 
   const visibleTags = hasOverflow
-    ? doc.tags.slice(0, MAX_VISIBLE_TAGS) 
-    : doc.tags;
+    ? itemTags.slice(0, MAX_VISIBLE_TAGS) 
+    : itemTags;
   
-  const hiddenCount = doc.tags.length - visibleTags.length;
+  const hiddenCount = itemTags.length - visibleTags.length;
 
-  // Effect to handle clicks outside the popup to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -48,11 +68,13 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    if (isPopupVisible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [isPopupVisible]);
 
   const handleMouseLeave = () => {
     hoverTimeoutRef.current = setTimeout(() => {
@@ -95,49 +117,58 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
         )}
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col flex-grow">
         <h3 className="font-bold text-base text-black truncate group-hover:text-gray-400 transition">{doc.docname || "No title available."}</h3>
         <p className="text-xs text-gray-400">{doc.date}</p>
         
-        {doc.tags && doc.tags.length > 0 && (
-          <div className="relative mt-1">
-            <div className="flex flex-wrap">
-              {visibleTags.map((tag, index) => (
-                <button key={index} onClick={(e) => handleTagClick(e, tag)} className="bg-gray-200 text-black text-xs font-medium mr-1 mb-1 px-2 py-0.5 rounded-md hover:bg-gray-300">
-                  {tag}
-                </button>
-              ))}
-              {hasOverflow && (
-                <button
-                  ref={buttonRef}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsPopupVisible(prev => !prev);
-                  }}
-                  className="bg-gray-300 text-black text-xs font-medium mr-1 mb-1 px-2 py-0.5 rounded-md hover:bg-gray-400 transition-colors"
-                >
-                  +{hiddenCount}
-                </button>
-              )}
+        <div className="relative mt-auto pt-1">
+          {isLoadingTags ? (
+            <div className="flex flex-wrap gap-1 animate-pulse">
+                <div className="h-5 bg-gray-700 rounded w-12"></div>
+                <div className="h-5 bg-gray-700 rounded w-16"></div>
             </div>
-            {isPopupVisible && hasOverflow && (
-              <div
-                ref={popupRef}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                className="absolute top-full left-0 mt-2 w-auto min-w-[150px] max-w-xs bg-white rounded-md shadow-lg p-2 z-10"
-              >
+          ) : (
+            itemTags.length > 0 && (
+              <>
                 <div className="flex flex-wrap">
-                  {doc.tags.map((tag, index) => (
+                  {visibleTags.map((tag, index) => (
                     <button key={index} onClick={(e) => handleTagClick(e, tag)} className="bg-gray-200 text-black text-xs font-medium mr-1 mb-1 px-2 py-0.5 rounded-md hover:bg-gray-300">
                       {tag}
                     </button>
                   ))}
+                  {hasOverflow && (
+                    <button
+                      ref={buttonRef}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsPopupVisible(prev => !prev);
+                      }}
+                      className="bg-gray-300 text-black text-xs font-medium mr-1 mb-1 px-2 py-0.5 rounded-md hover:bg-gray-400 transition-colors"
+                    >
+                      +{hiddenCount}
+                    </button>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+                {isPopupVisible && hasOverflow && (
+                  <div
+                    ref={popupRef}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    className="absolute bottom-full left-0 mb-2 w-auto min-w-[150px] max-w-xs bg-white rounded-md shadow-lg p-2 z-10"
+                  >
+                    <div className="flex flex-wrap">
+                      {itemTags.map((tag, index) => (
+                        <button key={index} onClick={(e) => handleTagClick(e, tag)} className="bg-gray-200 text-black text-xs font-medium mr-1 mb-1 px-2 py-0.5 rounded-md hover:bg-gray-300">
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )
+          )}
+        </div>
       </div>
     </div>
   );

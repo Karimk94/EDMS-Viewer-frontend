@@ -7,7 +7,6 @@ import { Pagination } from './components/Pagination';
 import { ImageModal } from './components/ImageModal';
 import { VideoModal } from './components/VideoModal';
 import { PdfModal } from './components/PdfModal';
-import { Loader } from './components/Loader';
 import { Document } from './components/DocumentItem';
 
 interface PersonOption {
@@ -155,27 +154,26 @@ export default function HomePage() {
         apiURL={FLASK_API_URL}
       />
       <main className="px-4 sm:px-6 lg:px-8 py-8">
-        {isLoading && <Loader />}
         {error && <p className="text-center text-red-400">{error}</p>}
-        {!isLoading && !error && (
-          <>
-            {documents.length > 0 ? (
-              <DocumentList 
-                documents={documents} 
-                onDocumentClick={handleDocumentClick} 
-                apiURL={FLASK_API_URL} 
-                faceRecogURL={FACE_RECOG_URL}
-                onTagSelect={handleTagSelect}
-              />
-            ) : (
-              <p className="text-center text-gray-400">No documents found.</p>
-            )}
-            <Pagination 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
-              onPageChange={setCurrentPage} 
-            />
-          </>
+        
+        <DocumentList 
+          documents={documents} 
+          onDocumentClick={handleDocumentClick} 
+          apiURL={FLASK_API_URL} 
+          onTagSelect={handleTagSelect}
+          isLoading={isLoading}
+        />
+        
+        {!isLoading && !error && documents.length === 0 && (
+            <p className="text-center text-gray-400">No documents found.</p>
+        )}
+        
+        {!isLoading && (
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            onPageChange={setCurrentPage} 
+          />
         )}
       </main>
       {selectedDoc && (

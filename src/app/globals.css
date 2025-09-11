@@ -70,3 +70,9 @@ body {
     --tw-ring-color: #ef4444;
     box-shadow: 0 0 0 2px var(--tw-ring-color);
 }
+
+@layer components {
+    .document-card {
+        @apply bg-white p-4 rounded-lg shadow-md flex flex-col;
+    }
+}
