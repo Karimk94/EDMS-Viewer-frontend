@@ -21,7 +21,8 @@ interface HeaderProps {
   setPersonCondition: (condition: 'any' | 'all') => void;
   selectedTags: string[];
   setSelectedTags: (tags: string[]) => void;
-  apiURL: string
+  apiURL: string;
+  onOpenUploadModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -30,7 +31,8 @@ export const Header: React.FC<HeaderProps> = ({
   selectedPerson, setSelectedPerson,
   personCondition, setPersonCondition,
   selectedTags, setSelectedTags,
-  apiURL 
+  apiURL,
+  onOpenUploadModal
 }) => (
   <header className="sticky top-0 z-40 bg-[#212121] border-b border-gray-700 px-4 sm:px-6 lg:px-8">
     <div className="flex items-center justify-between h-16">
@@ -62,7 +64,16 @@ export const Header: React.FC<HeaderProps> = ({
         />
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={onOpenUploadModal}
+          className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition flex items-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+          </svg>
+          Upload
+        </button>
         <button hidden={true}
           onClick={onClearCache}
           className="px-3 py-2 bg-gray-700 text-white text-xs font-medium rounded-md hover:bg-gray-600 transition"

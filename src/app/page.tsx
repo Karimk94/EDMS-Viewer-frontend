@@ -8,6 +8,7 @@ import { ImageModal } from './components/ImageModal';
 import { VideoModal } from './components/VideoModal';
 import { PdfModal } from './components/PdfModal';
 import { Document } from './components/DocumentItem';
+import { UploadModal } from './components/UploadModal';
 
 interface PersonOption {
   value: number;
@@ -42,6 +43,7 @@ export default function HomePage() {
   const [selectedVideo, setSelectedVideo] = useState<Document | null>(null);
   const [selectedPdf, setSelectedPdf] = useState<Document | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const FLASK_API_URL = 'http://127.0.0.1:5000';
   const FACE_RECOG_URL = 'http://127.0.0.1:5002';
@@ -136,6 +138,11 @@ export default function HomePage() {
     }
   };
 
+  const handleUploadComplete = () => {
+    setIsUploadModalOpen(false);
+    setRefreshKey(prevKey => prevKey + 1); 
+  };
+
   return (
     <div>
       <Header 
@@ -152,6 +159,7 @@ export default function HomePage() {
         selectedTags={selectedTags}
         setSelectedTags={setSelectedTags}
         apiURL={FLASK_API_URL}
+        onOpenUploadModal={() => setIsUploadModalOpen(true)}
       />
       <main className="px-4 sm:px-6 lg:px-8 py-8">
         {error && <p className="text-center text-red-400">{error}</p>}
@@ -197,6 +205,13 @@ export default function HomePage() {
           doc={selectedPdf}
           onClose={() => setSelectedPdf(null)}
           apiURL={FLASK_API_URL}
+        />
+      )}
+      {isUploadModalOpen && (
+        <UploadModal
+            onClose={() => setIsUploadModalOpen(false)}
+            apiURL={FLASK_API_URL}
+            onUploadComplete={handleUploadComplete}
         />
       )}
     </div>
