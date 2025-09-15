@@ -66,7 +66,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, apiURL, onUpl
         const formData = new FormData();
         formData.append('file', file);
         formData.append('docname', file.name);
-        formData.append('abstract', `Uploaded file: ${file.name}`);
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${apiURL}/api/upload_document`, true);
