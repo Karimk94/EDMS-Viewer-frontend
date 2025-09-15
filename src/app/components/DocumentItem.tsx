@@ -17,9 +17,10 @@ interface DocumentItemProps {
     onDocumentClick: (doc: Document) => void;
     apiURL: string;
     onTagSelect: (tag: string) => void;
+    isProcessing: boolean;
 }
 
-export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick, apiURL, onTagSelect }) => {
+export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick, apiURL, onTagSelect, isProcessing }) => {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -46,8 +47,10 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
         setIsLoadingTags(false);
       }
     };
-    fetchTags();
-  }, [doc.doc_id, apiURL]);
+    if (!isProcessing) {
+      fetchTags();
+    }
+  }, [doc.doc_id, apiURL, isProcessing]);
   
   const MAX_VISIBLE_TAGS = 4;
   const hasOverflow = itemTags.length > MAX_VISIBLE_TAGS;
@@ -96,8 +99,13 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
   return (
     <div 
       onClick={() => onDocumentClick(doc)}
-      className="cursor-pointer group flex flex-col"
+      className="cursor-pointer group flex flex-col relative"
     >
+      {isProcessing && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg z-10">
+          <div className="w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
       <div className="relative aspect-w-16 aspect-h-9 mb-2">
         <img 
           src={`${apiURL}/${doc.thumbnail_url}`}

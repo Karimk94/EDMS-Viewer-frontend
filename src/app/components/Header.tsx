@@ -23,6 +23,7 @@ interface HeaderProps {
   setSelectedTags: (tags: string[]) => void;
   apiURL: string;
   onOpenUploadModal: () => void;
+  isProcessing: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -32,7 +33,8 @@ export const Header: React.FC<HeaderProps> = ({
   personCondition, setPersonCondition,
   selectedTags, setSelectedTags,
   apiURL,
-  onOpenUploadModal
+  onOpenUploadModal,
+  isProcessing
 }) => (
   <header className="sticky top-0 z-40 bg-[#212121] border-b border-gray-700 px-4 sm:px-6 lg:px-8">
     <div className="flex items-center justify-between h-16">
@@ -65,6 +67,12 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-4">
+        {isProcessing && (
+          <div className="flex items-center gap-2 text-white text-sm">
+            <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+            <span>Processing...</span>
+          </div>
+        )}
         <button
           onClick={onOpenUploadModal}
           className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition flex items-center gap-2"

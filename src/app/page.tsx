@@ -9,6 +9,8 @@ import { VideoModal } from './components/VideoModal';
 import { PdfModal } from './components/PdfModal';
 import { Document } from './components/DocumentItem';
 import { UploadModal } from './components/UploadModal';
+import { UploadableFile } from './components/UploadFileItem';
+
 
 interface PersonOption {
   value: number;
@@ -44,9 +46,18 @@ export default function HomePage() {
   const [selectedPdf, setSelectedPdf] = useState<Document | null>(null);
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [processingDocs, setProcessingDocs] = useState<number[]>([]);
 
   const FLASK_API_URL = 'http://127.0.0.1:5000';
   const FACE_RECOG_URL = 'http://127.0.0.1:5002';
+
+  // On initial load, check localStorage for any documents that are still processing.
+  useEffect(() => {
+    const storedProcessingDocs = localStorage.getItem('processingDocs');
+    if (storedProcessingDocs) {
+      setProcessingDocs(JSON.parse(storedProcessingDocs));
+    }
+  }, []);
 
   useEffect(() => {
     if (selectedPerson && selectedPerson.length <= 1 && personCondition !== 'any') {
@@ -54,50 +65,80 @@ export default function HomePage() {
     }
   }, [selectedPerson, personCondition]);
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const url = new URL(`${FLASK_API_URL}/api/documents`);
-        url.searchParams.append('page', String(currentPage));
-
-        if (searchTerm) {
-          url.searchParams.append('search', searchTerm);
+  const fetchDocuments = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const url = new URL(`${FLASK_API_URL}/api/documents`);
+      url.searchParams.append('page', String(currentPage));
+      if (searchTerm) url.searchParams.append('search', searchTerm);
+      if (selectedPerson && selectedPerson.length > 0) {
+        const personNames = selectedPerson.map(p => p.label.split(' - ')[0]).join(',');
+        url.searchParams.append('persons', personNames);
+        if (selectedPerson.length > 1) {
+          url.searchParams.append('person_condition', personCondition);
         }
-        
-        if (selectedPerson && selectedPerson.length > 0) {
-            const personNames = selectedPerson.map(p => p.label.split(' - ')[0]).join(',');
-            url.searchParams.append('persons', personNames);
-            if (selectedPerson.length > 1) {
-              url.searchParams.append('person_condition', personCondition);
-            }
-        }
-
-        if (selectedTags.length > 0) {
-          url.searchParams.append('tags', selectedTags.join(','));
-        }
-        
-        const formattedDateFrom = formatToApiDate(dateFrom);
-        if (formattedDateFrom) url.searchParams.append('date_from', formattedDateFrom);
-
-        const formattedDateTo = formatToApiDate(dateTo);
-        if (formattedDateTo) url.searchParams.append('date_to', formattedDateTo);
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Network response was not ok.');
-        
-        const data = await response.json();
-        setDocuments(data.documents);
-        setTotalPages(data.total_pages);
-      } catch (err) {
-        setError('Failed to fetch documents. Is the API running?');
-      } finally {
-        setIsLoading(false);
       }
-    };
+      if (selectedTags.length > 0) {
+        url.searchParams.append('tags', selectedTags.join(','));
+      }
+      const formattedDateFrom = formatToApiDate(dateFrom);
+      if (formattedDateFrom) url.searchParams.append('date_from', formattedDateFrom);
+      const formattedDateTo = formatToApiDate(dateTo);
+      if (formattedDateTo) url.searchParams.append('date_to', formattedDateTo);
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok.');
+      
+      const data = await response.json();
+      setDocuments(data.documents);
+      setTotalPages(data.total_pages);
+    } catch (err) {
+      setError('Failed to fetch documents. Is the API running?');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDocuments();
   }, [currentPage, searchTerm, dateFrom, dateTo, selectedPerson, personCondition, selectedTags, refreshKey]);
+
+  // Polling effect to check the status of processing documents.
+  useEffect(() => {
+    if (processingDocs.length === 0) {
+        localStorage.removeItem('processingDocs');
+        return;
+    }
+
+    localStorage.setItem('processingDocs', JSON.stringify(processingDocs));
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`${FLASK_API_URL}/api/processing_status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ docnumbers: processingDocs }),
+        });
+        const data = await response.json();
+        const stillProcessing = data.processing || [];
+        
+        if (stillProcessing.length === 0) {
+          clearInterval(interval);
+          setProcessingDocs([]);
+          setRefreshKey(prev => prev + 1); // Final refresh
+        } else {
+          setProcessingDocs(stillProcessing);
+        }
+      } catch (error) {
+        console.error("Error checking processing status:", error);
+        clearInterval(interval);
+        setProcessingDocs([]);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [processingDocs]);
 
   const handleSearch = (newSearchTerm: string) => {
     setSearchTerm(newSearchTerm);
@@ -138,9 +179,22 @@ export default function HomePage() {
     }
   };
 
-  const handleUploadComplete = () => {
+  const handleAnalyze = (uploadedFiles: UploadableFile[]) => {
+    const docnumbers = uploadedFiles.map(f => f.docnumber!);
     setIsUploadModalOpen(false);
-    setRefreshKey(prevKey => prevKey + 1); 
+    setRefreshKey(prev => prev + 1); // Initial refresh to show uploaded docs
+    setProcessingDocs(prev => [...new Set([...prev, ...docnumbers])]); // Add new docs to processing queue
+
+    fetch(`${FLASK_API_URL}/api/process_uploaded_documents`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ docnumbers }),
+    })
+    .catch(error => {
+      console.error("Processing error:", error);
+      // If the call fails, remove these from the processing list
+      setProcessingDocs(prev => prev.filter(d => !docnumbers.includes(d)));
+    });
   };
 
   return (
@@ -160,6 +214,7 @@ export default function HomePage() {
         setSelectedTags={setSelectedTags}
         apiURL={FLASK_API_URL}
         onOpenUploadModal={() => setIsUploadModalOpen(true)}
+        isProcessing={processingDocs.length > 0}
       />
       <main className="px-4 sm:px-6 lg:px-8 py-8">
         {error && <p className="text-center text-red-400">{error}</p>}
@@ -170,6 +225,7 @@ export default function HomePage() {
           apiURL={FLASK_API_URL} 
           onTagSelect={handleTagSelect}
           isLoading={isLoading}
+          processingDocs={processingDocs}
         />
         
         {!isLoading && !error && documents.length === 0 && (
@@ -193,7 +249,7 @@ export default function HomePage() {
           onUpdateAbstractSuccess={handleUpdateAbstractSuccess}
         />
       )}
-      {selectedVideo && (
+       {selectedVideo && (
         <VideoModal
           doc={selectedVideo}
           onClose={() => setSelectedVideo(null)}
@@ -209,9 +265,12 @@ export default function HomePage() {
       )}
       {isUploadModalOpen && (
         <UploadModal
-            onClose={() => setIsUploadModalOpen(false)}
+            onClose={() => {
+              setIsUploadModalOpen(false);
+              setRefreshKey(prev => prev + 1);
+            }}
             apiURL={FLASK_API_URL}
-            onUploadComplete={handleUploadComplete}
+            onAnalyze={handleAnalyze}
         />
       )}
     </div>

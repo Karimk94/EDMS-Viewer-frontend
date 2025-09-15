@@ -1,16 +1,15 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { UploadFileItem, UploadableFile, UploadStatus } from './UploadFileItem';
 
-interface UploadModalProps {
+export interface UploadModalProps {
   onClose: () => void;
   apiURL: string;
-  onUploadComplete: () => void;
+  onAnalyze: (uploadedFiles: UploadableFile[]) => void;
 }
 
-export const UploadModal: React.FC<UploadModalProps> = ({ onClose, apiURL, onUploadComplete }) => {
+export const UploadModal: React.FC<UploadModalProps> = ({ onClose, apiURL, onAnalyze }) => {
   const [files, setFiles] = useState<UploadableFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileIdCounter = useRef(0);
 
@@ -66,6 +65,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, apiURL, onUpl
         const formData = new FormData();
         formData.append('file', file);
         formData.append('docname', file.name);
+        formData.append('abstract', `Uploaded file: ${file.name}`);
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${apiURL}/api/upload_document`, true);
@@ -105,59 +105,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, apiURL, onUpl
     setIsUploading(false);
   };
 
-  const handleProcess = async () => {
+  const handleAnalyze = () => {
     const successfulUploads = files.filter(f => f.status === 'success' && f.docnumber);
-    if (successfulUploads.length === 0) return;
-
-    setIsProcessing(true);
-    successfulUploads.forEach(f => updateFileStatus(f.id, 'processing', { progress: 0 }));
-
-    try {
-        const docnumbers = successfulUploads.map(f => f.docnumber!);
-        const response = await fetch(`${apiURL}/api/process_uploaded_documents`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ docnumbers })
-        });
-        
-        const result = await response.json();
-        const processedSet = new Set(result.processed || []);
-        const failedSet = new Set(result.failed || []);
-
-        // Use a simple progress simulation that resolves when the API call is done.
-        const processingTime = Math.max(1000, docnumbers.length * 500); // at least 1s
-        let startTime = Date.now();
-
-        const updateProgress = () => {
-            const elapsedTime = Date.now() - startTime;
-            const progress = Math.min(100, (elapsedTime / processingTime) * 100);
-
-            successfulUploads.forEach(f => {
-                updateFileStatus(f.id, 'processing', { progress });
-            });
-            
-            if (progress < 100) {
-                requestAnimationFrame(updateProgress);
-            } else {
-                 // Update final statuses based on API response
-                successfulUploads.forEach(f => {
-                    if (processedSet.has(f.docnumber)) {
-                        updateFileStatus(f.id, 'success', { progress: 100 });
-                    } else if (failedSet.has(f.docnumber)) {
-                        updateFileStatus(f.id, 'error', { error: 'Processing failed on server.' });
-                    } else {
-                        updateFileStatus(f.id, 'error', { error: 'Unknown processing status.' });
-                    }
-                });
-                setIsProcessing(false);
-                onUploadComplete();
-            }
-        };
-        requestAnimationFrame(updateProgress);
-
-    } catch (error) {
-        successfulUploads.forEach(f => updateFileStatus(f.id, 'error', { error: 'Failed to start processing.' }));
-        setIsProcessing(false);
+    if (successfulUploads.length > 0) {
+      onAnalyze(successfulUploads);
     }
   };
 
@@ -168,7 +119,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, apiURL, onUpl
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col p-8">
        <div className="flex-shrink-0 flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-white">Upload Documents</h2>
-        <button onClick={onClose} disabled={isUploading || isProcessing} className="text-gray-400 hover:text-white text-3xl disabled:opacity-50">&times;</button>
+        <button onClick={onClose} disabled={isUploading} className="text-gray-400 hover:text-white text-3xl disabled:opacity-50">&times;</button>
       </div>
 
       <div className="flex-1 flex gap-8 overflow-hidden">
@@ -204,17 +155,24 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onClose, apiURL, onUpl
              <div className="flex-shrink-0 pt-6 border-t border-gray-700 flex justify-end gap-4">
                <button 
                   onClick={handleUpload} 
-                  disabled={pendingFilesCount === 0 || isUploading || isProcessing}
+                  disabled={pendingFilesCount === 0 || isUploading}
                   className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:bg-gray-600 disabled:cursor-not-allowed"
                 >
                   {isUploading ? 'Uploading...' : `Upload Pending (${pendingFilesCount})`}
                 </button>
                  <button 
-                  onClick={handleProcess} 
-                  disabled={successfulUploadsCount === 0 || isProcessing || isUploading}
+                  onClick={handleAnalyze} 
+                  disabled={successfulUploadsCount === 0 || isUploading}
                   className="px-6 py-2 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-600 transition disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
-                  {isProcessing ? 'Processing...' : `Process Uploaded (${successfulUploadsCount})`}
+                  Analyze with AI ({successfulUploadsCount})
+                </button>
+                <button 
+                  onClick={onClose} 
+                  disabled={isUploading}
+                  className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition disabled:bg-gray-500 disabled:cursor-not-allowed"
+                >
+                  Close
                 </button>
             </div>
         </div>
