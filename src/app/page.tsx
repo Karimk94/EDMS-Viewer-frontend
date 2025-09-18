@@ -48,8 +48,8 @@ export default function HomePage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [processingDocs, setProcessingDocs] = useState<number[]>([]);
 
-  const FLASK_API_URL = 'http://127.0.0.1:5000';
-  const FACE_RECOG_URL = 'http://127.0.0.1:5002';
+const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL || '';
+const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
 
   // On initial load, check localStorage for any documents that are still processing.
   useEffect(() => {
