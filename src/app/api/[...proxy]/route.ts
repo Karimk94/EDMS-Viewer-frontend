@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL;
 const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL;
 
-// This function handles all incoming requests to /api/*
-export async function handler(req: NextRequest) {
+// This is the core logic that will be shared by all HTTP methods.
+async function proxyHandler(req: NextRequest): Promise<NextResponse> {
   // Extract the path the browser is trying to access (e.g., /documents, /image/123)
   const path = req.nextUrl.pathname.replace('/api', '');
   
@@ -17,12 +17,10 @@ export async function handler(req: NextRequest) {
     targetApiBaseUrl = FACE_RECOG_URL;
     targetPathPrefix = ''; // The face-recog service doesn't use /api
   } else if (path.startsWith('/cache/')) {
-    // *** FIX: Handle requests for cached assets ***
-    // These requests on the Flask server do not have the /api prefix.
+    // Correctly handle requests for cached assets by removing the /api prefix
     targetApiBaseUrl = FLASK_API_URL;
     targetPathPrefix = ''; // Forward directly to /cache/...
-  }
-  else {
+  } else {
     targetApiBaseUrl = FLASK_API_URL;
   }
 
@@ -33,23 +31,21 @@ export async function handler(req: NextRequest) {
   // Construct the full URL to the target backend service, including query parameters
   const targetUrl = `${targetApiBaseUrl}${targetPathPrefix}${path}${req.nextUrl.search}`;
   
-  // Create new headers, copying the content-type from the original request
   const headers = new Headers();
   if (req.headers.get('Content-Type')) {
     headers.set('Content-Type', req.headers.get('Content-Type')!);
   }
 
-  // Forward the request from the Next.js server to the backend
   try {
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: headers,
       body: req.method !== 'GET' && req.method !== 'HEAD' ? req.body : undefined,
-      // @ts-ignore
-      duplex: 'half', // Required for streaming request bodies
+      // @ts-ignore - duplex is required for streaming bodies
+      duplex: 'half', 
     });
 
-    // Return the response from the backend directly to the browser
+    // Stream the response back to the client
     return new NextResponse(response.body, {
       status: response.status,
       statusText: response.statusText,
@@ -61,5 +57,20 @@ export async function handler(req: NextRequest) {
   }
 }
 
-// Export handlers for all common HTTP methods to use the same proxy logic
-export { handler as GET, handler as POST, handler as PUT, handler as DELETE };
+// Export a separate, named function for each HTTP method.
+export async function GET(req: NextRequest) {
+  return proxyHandler(req);
+}
+
+export async function POST(req: NextRequest) {
+  return proxyHandler(req);
+}
+
+export async function PUT(req: NextRequest) {
+    return proxyHandler(req);
+}
+
+export async function DELETE(req: NextRequest) {
+    return proxyHandler(req);
+}
+

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "bundle": "node create-bundle.js"
   },
   "dependencies": {
     "next": "14.2.4",
@@ -22,6 +23,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-select": "^5.0.0",
+    "archiver": "^7.0.1",
     "autoprefixer": "^10.4.21",
     "eslint": "^8",
     "eslint-config-next": "14.2.4",
