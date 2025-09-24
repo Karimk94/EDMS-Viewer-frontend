@@ -17,7 +17,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({ doc, onClose, apiURL }) 
           <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl">&times;</button>
           <h2 className="text-xl font-bold text-white mb-4">{doc.docname}</h2>
           <video controls autoPlay className="w-full max-h-[70vh] rounded-lg bg-black">
-            <source src={`${apiURL}/api/video/${doc.doc_id}`} type="video/mp4" />
+            <source src={`${apiURL}/video/${doc.doc_id}`} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
           <div className="mt-4 mb-6">
@@ -32,4 +32,3 @@ export const VideoModal: React.FC<VideoModalProps> = ({ doc, onClose, apiURL }) 
     </div>
   );
 };
-

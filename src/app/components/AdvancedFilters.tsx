@@ -123,7 +123,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
     additional: { page: number } | undefined
   ) => {
     const page = additional?.page || 1;
-    const response = await fetch(`${apiURL}/api/persons?page=${page}&search=${search}`);
+    const response = await fetch(`${apiURL}/persons?page=${page}&search=${search}`);
     const data = await response.json();
     
     return {

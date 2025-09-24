@@ -15,7 +15,7 @@ export interface Document {
 interface DocumentItemProps {
     doc: Document;
     onDocumentClick: (doc: Document) => void;
-    apiURL: string;
+    apiURL: string;   // All URLs go through the proxy
     onTagSelect: (tag: string) => void;
     isProcessing: boolean;
 }
@@ -33,7 +33,7 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
     const fetchTags = async () => {
       setIsLoadingTags(true);
       try {
-        const response = await fetch(`${apiURL}/api/tags/${doc.doc_id}`);
+        const response = await fetch(`${apiURL}/tags/${doc.doc_id}`);
         if (response.ok) {
           const data = await response.json();
           setItemTags(data.tags || []);
@@ -82,7 +82,7 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
   const handleMouseLeave = () => {
     hoverTimeoutRef.current = setTimeout(() => {
       setIsPopupVisible(false);
-    }, 300); // Closes after 300ms
+    }, 300);
   };
 
   const handleMouseEnter = () => {
@@ -92,9 +92,12 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
   };
 
   const handleTagClick = (e: React.MouseEvent, tag: string) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation();
     onTagSelect(tag);
   };
+
+  // Construct the asset URL through the proxy
+  const thumbnailUrl = `${apiURL}/${doc.thumbnail_url.startsWith('cache') ? '' : 'api/'}${doc.thumbnail_url}`;
 
   return (
     <div 
@@ -108,7 +111,7 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ doc, onDocumentClick
       )}
       <div className="relative aspect-w-16 aspect-h-9 mb-2">
         <img 
-          src={`${apiURL}/${doc.thumbnail_url}`}
+          src={thumbnailUrl}
           alt="Thumbnail" 
           className="w-full h-full object-cover rounded-lg bg-gray-800 group-hover:opacity-80 transition"
           onError={(e) => { (e.target as HTMLImageElement).src = '/no-image.svg'; }}

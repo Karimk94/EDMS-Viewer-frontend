@@ -25,7 +25,7 @@ export const TagFilter: React.FC<TagFilterProps> = ({ apiURL, selectedTags, setS
     if (!tagsFetched) {
       setIsLoading(true);
       try {
-        const response = await fetch(`${apiURL}/api/tags`);
+        const response = await fetch(`${apiURL}/tags`);
         if (!response.ok) throw new Error('Failed to fetch tags');
         const data = await response.json();
         setAllTags(data);

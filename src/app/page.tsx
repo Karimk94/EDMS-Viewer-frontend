@@ -11,7 +11,6 @@ import { Document } from './components/DocumentItem';
 import { UploadModal } from './components/UploadModal';
 import { UploadableFile } from './components/UploadFileItem';
 
-
 interface PersonOption {
   value: number;
   label: string;
@@ -48,10 +47,9 @@ export default function HomePage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [processingDocs, setProcessingDocs] = useState<number[]>([]);
 
-const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL || '';
-const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
+  // All requests, both for data and assets, will now go through our Next.js API proxy.
+  const API_PROXY_URL = '/api';
 
-  // On initial load, check localStorage for any documents that are still processing.
   useEffect(() => {
     const storedProcessingDocs = localStorage.getItem('processingDocs');
     if (storedProcessingDocs) {
@@ -69,7 +67,8 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
     setIsLoading(true);
     setError(null);
     try {
-      const url = new URL(`${FLASK_API_URL}/api/documents`);
+      // Use a relative URL to our own API proxy
+      const url = new URL(`${API_PROXY_URL}/documents`, window.location.origin);
       url.searchParams.append('page', String(currentPage));
       if (searchTerm) url.searchParams.append('search', searchTerm);
       if (selectedPerson && selectedPerson.length > 0) {
@@ -104,18 +103,15 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
     fetchDocuments();
   }, [currentPage, searchTerm, dateFrom, dateTo, selectedPerson, personCondition, selectedTags, refreshKey]);
 
-  // Polling effect to check the status of processing documents.
   useEffect(() => {
     if (processingDocs.length === 0) {
         localStorage.removeItem('processingDocs');
         return;
     }
-
     localStorage.setItem('processingDocs', JSON.stringify(processingDocs));
-
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${FLASK_API_URL}/api/processing_status`, {
+        const response = await fetch(`${API_PROXY_URL}/processing_status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ docnumbers: processingDocs }),
@@ -126,7 +122,7 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
         if (stillProcessing.length === 0) {
           clearInterval(interval);
           setProcessingDocs([]);
-          setRefreshKey(prev => prev + 1); // Final refresh
+          setRefreshKey(prev => prev + 1);
         } else {
           setProcessingDocs(stillProcessing);
         }
@@ -136,7 +132,6 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
         setProcessingDocs([]);
       }
     }, 5000);
-
     return () => clearInterval(interval);
   }, [processingDocs]);
 
@@ -148,7 +143,7 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
   const handleClearCache = async () => {
     if (!confirm('Are you sure you want to clear the thumbnail cache?')) return;
     try {
-      await fetch(`${FLASK_API_URL}/api/clear_cache`, { method: 'POST' });
+      await fetch(`${API_PROXY_URL}/clear_cache`, { method: 'POST' });
       alert('Thumbnail cache cleared.');
       setRefreshKey(prevKey => prevKey + 1);
     } catch (err) {
@@ -156,21 +151,15 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
     }
   };
 
-  const handleUpdateAbstractSuccess = (docId: number, newAbstract: string) => {
-    if (selectedDoc) {
-      setSelectedDoc({ ...selectedDoc, title: newAbstract, abstract: newAbstract });
-    }
+  const handleUpdateAbstractSuccess = () => {
     setRefreshKey(prevKey => prevKey + 1);
+    setSelectedDoc(null);
   };
 
   const handleDocumentClick = (doc: Document) => {
-    if (doc.media_type === 'video') {
-      setSelectedVideo(doc);
-    } else if (doc.media_type === 'pdf') {
-      setSelectedPdf(doc);
-    } else {
-      setSelectedDoc(doc);
-    }
+    if (doc.media_type === 'video') setSelectedVideo(doc);
+    else if (doc.media_type === 'pdf') setSelectedPdf(doc);
+    else setSelectedDoc(doc);
   };
   
   const handleTagSelect = (tag: string) => {
@@ -182,17 +171,15 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
   const handleAnalyze = (uploadedFiles: UploadableFile[]) => {
     const docnumbers = uploadedFiles.map(f => f.docnumber!);
     setIsUploadModalOpen(false);
-    setRefreshKey(prev => prev + 1); // Initial refresh to show uploaded docs
-    setProcessingDocs(prev => [...new Set([...prev, ...docnumbers])]); // Add new docs to processing queue
-
-    fetch(`${FLASK_API_URL}/api/process_uploaded_documents`, {
+    setRefreshKey(prev => prev + 1);
+    setProcessingDocs(prev => [...new Set([...prev, ...docnumbers])]);
+    fetch(`${API_PROXY_URL}/process_uploaded_documents`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ docnumbers }),
     })
     .catch(error => {
       console.error("Processing error:", error);
-      // If the call fails, remove these from the processing list
       setProcessingDocs(prev => prev.filter(d => !docnumbers.includes(d)));
     });
   };
@@ -202,36 +189,28 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
       <Header 
         onSearch={handleSearch} 
         onClearCache={handleClearCache}
-        dateFrom={dateFrom}
-        setDateFrom={setDateFrom}
-        dateTo={dateTo}
-        setDateTo={setDateTo}
-        selectedPerson={selectedPerson}
-        setSelectedPerson={setSelectedPerson}
-        personCondition={personCondition}
-        setPersonCondition={setPersonCondition}
-        selectedTags={selectedTags}
-        setSelectedTags={setSelectedTags}
-        apiURL={FLASK_API_URL}
+        dateFrom={dateFrom} setDateFrom={setDateFrom}
+        dateTo={dateTo} setDateTo={setDateTo}
+        selectedPerson={selectedPerson} setSelectedPerson={setSelectedPerson}
+        personCondition={personCondition} setPersonCondition={setPersonCondition}
+        selectedTags={selectedTags} setSelectedTags={setSelectedTags}
+        apiURL={API_PROXY_URL}
         onOpenUploadModal={() => setIsUploadModalOpen(true)}
         isProcessing={processingDocs.length > 0}
       />
       <main className="px-4 sm:px-6 lg:px-8 py-8">
         {error && <p className="text-center text-red-400">{error}</p>}
-        
         <DocumentList 
           documents={documents} 
           onDocumentClick={handleDocumentClick} 
-          apiURL={FLASK_API_URL} 
+          apiURL={API_PROXY_URL} 
           onTagSelect={handleTagSelect}
           isLoading={isLoading}
           processingDocs={processingDocs}
         />
-        
         {!isLoading && !error && documents.length === 0 && (
             <p className="text-center text-gray-400">No documents found.</p>
         )}
-        
         {!isLoading && (
           <Pagination 
             currentPage={currentPage} 
@@ -244,8 +223,7 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
         <ImageModal 
           doc={selectedDoc} 
           onClose={() => setSelectedDoc(null)} 
-          apiURL={FLASK_API_URL}
-          faceRecogURL={FACE_RECOG_URL}
+          apiURL={API_PROXY_URL}
           onUpdateAbstractSuccess={handleUpdateAbstractSuccess}
         />
       )}
@@ -253,14 +231,14 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
         <VideoModal
           doc={selectedVideo}
           onClose={() => setSelectedVideo(null)}
-          apiURL={FLASK_API_URL}
+          apiURL={API_PROXY_URL}
         />
       )}
       {selectedPdf && (
         <PdfModal
           doc={selectedPdf}
           onClose={() => setSelectedPdf(null)}
-          apiURL={FLASK_API_URL}
+          apiURL={API_PROXY_URL}
         />
       )}
       {isUploadModalOpen && (
@@ -269,7 +247,7 @@ const FACE_RECOG_URL = process.env.NEXT_PUBLIC_FACE_RECOG_URL || '';
               setIsUploadModalOpen(false);
               setRefreshKey(prev => prev + 1);
             }}
-            apiURL={FLASK_API_URL}
+            apiURL={API_PROXY_URL}
             onAnalyze={handleAnalyze}
         />
       )}

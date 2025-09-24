@@ -19,6 +19,7 @@
 
 # production
 /build
+/files to install
 
 # misc
 .DS_Store

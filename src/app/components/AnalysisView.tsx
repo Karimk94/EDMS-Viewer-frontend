@@ -4,11 +4,10 @@ interface AnalysisViewProps {
   result: any;
   docId: number;
   apiURL: string;
-  faceRecogURL: string;
-  onUpdateAbstractSuccess: (docId: number, newAbstract: string) => void;
+  onUpdateAbstractSuccess: () => void;
 }
 
-export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiURL, faceRecogURL, onUpdateAbstractSuccess }) => {
+export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiURL, onUpdateAbstractSuccess }) => {
   const [faceNames, setFaceNames] = useState<{ [key: number]: string }>({});
   const [isUpdating, setIsUpdating] = useState(false);
   const [savingFaceIndex, setSavingFaceIndex] = useState<number | null>(null);
@@ -45,7 +44,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
     }
     setSavingFaceIndex(face.index);
     try {
-      const response = await fetch(`${faceRecogURL}/add_face`, {
+      await fetch(`${apiURL}/add_face`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,19 +53,13 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
           original_image_b64: result.original_image_b64,
         }),
       });
-      if (!response.ok) throw new Error('Failed to save face to the recognition service.');
       alert(`Successfully saved "${name.trim()}" to the known faces database.`);
 
-      const saveNameResponse = await fetch(`${apiURL}/api/add_person`, {
+      await fetch(`${apiURL}/add_person`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim() }),
       });
-
-      if (!saveNameResponse.ok) {
-        const errorData = await saveNameResponse.json();
-        throw new Error(errorData.error || 'Failed to save name to the database.');
-      }
 
     } catch (error: any) {
       alert(`Error: ${error.message}`);
@@ -84,16 +77,13 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
 
     setIsUpdating(true);
     try {
-      const response = await fetch(`${apiURL}/api/update_abstract`, {
+      const response = await fetch(`${apiURL}/update_abstract`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ doc_id: docId, names: namesToSave }),
       });
       if (!response.ok) throw new Error((await response.json()).error);
-      const data = await response.json();
-      // Ensure the new abstract is not an empty string
-      const newAbstract = data.abstract || namesToSave.join(', ');
-      onUpdateAbstractSuccess(docId, newAbstract);
+      onUpdateAbstractSuccess();
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     } finally {

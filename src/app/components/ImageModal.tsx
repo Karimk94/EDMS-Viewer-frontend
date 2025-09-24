@@ -9,11 +9,10 @@ interface ImageModalProps {
   doc: Document;
   onClose: () => void;
   apiURL: string;
-  faceRecogURL: string;
-  onUpdateAbstractSuccess: (docId: number, newAbstract: string) => void;
+  onUpdateAbstractSuccess: () => void;
 }
 
-export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, faceRecogURL, onUpdateAbstractSuccess }) => {
+export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, onUpdateAbstractSuccess }) => {
   const [view, setView] = useState<'image' | 'analysis'>('image');
   const [isLoading, setIsLoading] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -27,7 +26,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, fa
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`${apiURL}/api/image/${doc.doc_id}`);
+        const response = await fetch(`${apiURL}/image/${doc.doc_id}`);
         if (!response.ok) throw new Error('Image not found in EDMS.');
         const blob = await response.blob();
         originalImageBlob.current = blob;
@@ -50,7 +49,7 @@ export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, fa
     formData.append('image_file', originalImageBlob.current, `${doc.doc_id}.jpg`);
 
     try {
-      const response = await fetch(`${faceRecogURL}/analyze_image`, { method: 'POST', body: formData });
+      const response = await fetch(`${apiURL}/analyze_image`, { method: 'POST', body: formData });
       if (!response.ok) throw new Error((await response.json()).error || 'Analysis failed.');
       setAnalysisResult(await response.json());
       setView('analysis');
@@ -109,7 +108,6 @@ export const ImageModal: React.FC<ImageModalProps> = ({ doc, onClose, apiURL, fa
               result={analysisResult} 
               docId={doc.doc_id} 
               apiURL={apiURL}
-              faceRecogURL={faceRecogURL}
               onUpdateAbstractSuccess={onUpdateAbstractSuccess}
             />
           )}

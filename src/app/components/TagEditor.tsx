@@ -19,8 +19,8 @@ export const TagEditor: React.FC<TagEditorProps> = ({ docId, apiURL }) => {
       setIsLoading(true);
       try {
         const [docTagsRes, allTagsRes] = await Promise.all([
-          fetch(`${apiURL}/api/tags/${docId}`),
-          fetch(`${apiURL}/api/tags`),
+          fetch(`${apiURL}/tags/${docId}`),
+          fetch(`${apiURL}/tags`),
         ]);
 
         const docTagsData = docTagsRes.ok ? await docTagsRes.json() : { tags: [] };
@@ -77,7 +77,7 @@ export const TagEditor: React.FC<TagEditorProps> = ({ docId, apiURL }) => {
     };
 
     try {
-      const response = await fetch(`${apiURL}/api/tags/${docId}`, {
+      const response = await fetch(`${apiURL}/tags/${docId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tag: trimmedTag }),
@@ -99,7 +99,7 @@ export const TagEditor: React.FC<TagEditorProps> = ({ docId, apiURL }) => {
 
   const handleRemoveTag = async (tagToRemove: string) => {
     try {
-      await fetch(`${apiURL}/api/tags/${docId}/${encodeURIComponent(tagToRemove)}`, {
+      await fetch(`${apiURL}/tags/${docId}/${encodeURIComponent(tagToRemove)}`, {
         method: 'DELETE',
       });
       setTags(tags.filter((tag) => tag !== tagToRemove));

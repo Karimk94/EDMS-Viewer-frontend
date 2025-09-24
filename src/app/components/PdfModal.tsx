@@ -32,7 +32,7 @@ export const PdfModal: React.FC<PdfModalProps> = ({ doc, onClose, apiURL }) => {
         <div className={`flex-grow p-4 grid ${isDetailsVisible ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1'} gap-4 min-h-0 transition-all duration-300`}>
           <div className={`${isDetailsVisible ? 'md:col-span-2' : 'col-span-1'} h-full`}>
             <iframe
-                src={`${apiURL}/api/pdf/${doc.doc_id}`}
+                src={`${apiURL}/pdf/${doc.doc_id}`}
                 className="w-full h-full border-0 rounded-lg bg-white"
                 title={doc.docname}
             />
