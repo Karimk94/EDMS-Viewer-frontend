@@ -9,18 +9,21 @@ async function proxyHandler(req: NextRequest): Promise<NextResponse> {
   // Extract the path the browser is trying to access (e.g., /documents, /image/123)
   const path = req.nextUrl.pathname.replace('/api', '');
   
-  // Determine which backend API to forward the request to based on the path
+  // Define the routes that belong to the Face Recognition service
+  const faceRecogRoutes = ['/analyze_image', '/add_face', '/recognize_faces', '/analyze_image_stream'];
+
   let targetApiBaseUrl;
-  let targetPathPrefix = '/api'; // Most Flask routes start with /api
+  let finalPath = path;
   
-  if (path.indexOf('analyze_image') > -1 || path.indexOf('add_face') > -1) {
+  // Check if the requested path starts with any of the face recognition routes
+  if (faceRecogRoutes.some(route => path.startsWith(route))) {
     targetApiBaseUrl = FACE_RECOG_URL;
-  } else if (path.startsWith('/cache/')) {
-    // Correctly handle requests for cached assets by removing the /api prefix
-    targetApiBaseUrl = FLASK_API_URL;
-    targetPathPrefix = ''; // Forward directly to /cache/...
   } else {
     targetApiBaseUrl = FLASK_API_URL;
+    // For the main Flask API, all routes are prefixed with /api, except for /cache
+    if (!path.startsWith('/cache/')) {
+        finalPath = `/api${path}`;
+    }
   }
 
   if (!targetApiBaseUrl) {
@@ -28,7 +31,7 @@ async function proxyHandler(req: NextRequest): Promise<NextResponse> {
   }
 
   // Construct the full URL to the target backend service, including query parameters
-  const targetUrl = `${targetApiBaseUrl}${targetPathPrefix}${path}${req.nextUrl.search}`;
+  const targetUrl = `${targetApiBaseUrl}${finalPath}${req.nextUrl.search}`;
   
   const headers = new Headers();
   if (req.headers.get('Content-Type')) {
@@ -72,4 +75,3 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
     return proxyHandler(req);
 }
-
