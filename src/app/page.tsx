@@ -172,7 +172,9 @@ export default function HomePage() {
     const docnumbers = uploadedFiles.map(f => f.docnumber!);
     setIsUploadModalOpen(false);
     setRefreshKey(prev => prev + 1);
-    setProcessingDocs(prev => [...new Set([...prev, ...docnumbers])]);
+    //setProcessingDocs(prev => [...new Set([...prev, ...docnumbers])]);
+    setProcessingDocs(prev => Array.from(new Set(prev.concat(docnumbers))));
+
     fetch(`${API_PROXY_URL}/process_uploaded_documents`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

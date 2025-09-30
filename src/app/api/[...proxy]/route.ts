@@ -13,9 +13,8 @@ async function proxyHandler(req: NextRequest): Promise<NextResponse> {
   let targetApiBaseUrl;
   let targetPathPrefix = '/api'; // Most Flask routes start with /api
   
-  if (path.startsWith('/analyze_image') || path.startsWith('/add_face')) {
+  if (path.indexOf('analyze_image') > -1 || path.indexOf('add_face') > -1) {
     targetApiBaseUrl = FACE_RECOG_URL;
-    targetPathPrefix = ''; // The face-recog service doesn't use /api
   } else if (path.startsWith('/cache/')) {
     // Correctly handle requests for cached assets by removing the /api prefix
     targetApiBaseUrl = FLASK_API_URL;

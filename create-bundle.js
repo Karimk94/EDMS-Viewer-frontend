@@ -50,7 +50,10 @@ const files_and_folders_to_bundle = [
     'package-lock.json',
     'next.config.mjs',
     'server.js',
-    '.env.production'
+    '.env.production',
+    'tailwind.config.ts',
+    'postcss.config.ts',
+    'postcss.config.mjs'
 ];
 
 files_and_folders_to_bundle.forEach(item => {
