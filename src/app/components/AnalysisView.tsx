@@ -101,7 +101,16 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ result, docId, apiUR
           result.faces.map((face: any) => (
             <div key={face.index} className="p-3 bg-[#1f1f1f] rounded-lg">
               <div className="grid grid-cols-[auto,1fr,auto] gap-4 items-center">
-                <label className="font-semibold text-gray-300">Face #{face.index}</label>
+                <div className="flex items-center gap-2">
+                  {face.thumbnail_b64 && (
+                    <img
+                      src={`data:image/jpeg;base64,${face.thumbnail_b64}`}
+                      alt={`Face #${face.index}`}
+                      className="w-16 h-16 rounded-md object-cover"
+                    />
+                  )}
+                  <label className="font-semibold text-gray-300">Face #{face.index}</label>
+                </div>
                 <input 
                   type="text"
                   placeholder="Enter or correct name..."
