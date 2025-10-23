@@ -40,6 +40,7 @@ export default function HomePage() {
   const [selectedPerson, setSelectedPerson] = useState<PersonOption[] | null>(null);
   const [personCondition, setPersonCondition] = useState<'any' | 'all'>('any');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedYears, setSelectedYears] = useState<number[]>([]); // Changed to array
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Document | null>(null);
   const [selectedPdf, setSelectedPdf] = useState<Document | null>(null);
@@ -81,14 +82,17 @@ export default function HomePage() {
       if (selectedTags.length > 0) {
         url.searchParams.append('tags', selectedTags.join(','));
       }
+      if (selectedYears.length > 0) { // Check array length
+        url.searchParams.append('years', selectedYears.join(',')); // Send comma-separated string
+      }
       const formattedDateFrom = formatToApiDate(dateFrom);
       if (formattedDateFrom) url.searchParams.append('date_from', formattedDateFrom);
       const formattedDateTo = formatToApiDate(dateTo);
       if (formattedDateTo) url.searchParams.append('date_to', formattedDateTo);
-      
+
       const response = await fetch(url);
       if (!response.ok) throw new Error('Network response was not ok.');
-      
+
       const data = await response.json();
       setDocuments(data.documents);
       setTotalPages(data.total_pages);
@@ -101,7 +105,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchDocuments();
-  }, [currentPage, searchTerm, dateFrom, dateTo, selectedPerson, personCondition, selectedTags, refreshKey]);
+  }, [currentPage, searchTerm, dateFrom, dateTo, selectedPerson, personCondition, selectedTags, selectedYears, refreshKey]); // Added selectedYears
 
   useEffect(() => {
     if (processingDocs.length === 0) {
@@ -118,7 +122,7 @@ export default function HomePage() {
         });
         const data = await response.json();
         const stillProcessing = data.processing || [];
-        
+
         if (stillProcessing.length === 0) {
           clearInterval(interval);
           setProcessingDocs([]);
@@ -161,7 +165,7 @@ export default function HomePage() {
     else if (doc.media_type === 'pdf') setSelectedPdf(doc);
     else setSelectedDoc(doc);
   };
-  
+
   const handleTagSelect = (tag: string) => {
     if (!selectedTags.includes(tag)) {
       setSelectedTags([...selectedTags, tag]);
@@ -186,26 +190,44 @@ export default function HomePage() {
     });
   };
 
+  const handleClearFilters = () => {
+    setDateFrom(null);
+    setDateTo(null);
+    setSelectedPerson(null);
+    setPersonCondition('any');
+    setSelectedTags([]);
+    setSelectedYears([]);
+    setCurrentPage(1); // Reset to first page
+    // No need to call setRefreshKey here, useEffect will trigger fetchDocuments
+  };
+
+  // Determine if any filters are active (excluding search term)
+  const hasActiveFilters = Boolean(dateFrom || dateTo || (selectedPerson && selectedPerson.length > 0) || selectedTags.length > 0 || selectedYears.length > 0);
+
+
   return (
     <div>
-      <Header 
-        onSearch={handleSearch} 
+      <Header
+        onSearch={handleSearch}
         onClearCache={handleClearCache}
+        onClearFilters={handleClearFilters} // Pass clear function
         dateFrom={dateFrom} setDateFrom={setDateFrom}
         dateTo={dateTo} setDateTo={setDateTo}
         selectedPerson={selectedPerson} setSelectedPerson={setSelectedPerson}
         personCondition={personCondition} setPersonCondition={setPersonCondition}
         selectedTags={selectedTags} setSelectedTags={setSelectedTags}
+        selectedYears={selectedYears} setSelectedYears={setSelectedYears} // Pass years state
         apiURL={API_PROXY_URL}
         onOpenUploadModal={() => setIsUploadModalOpen(true)}
         isProcessing={processingDocs.length > 0}
+        hasActiveFilters={hasActiveFilters} // Pass flag for clear button
       />
       <main className="px-4 sm:px-6 lg:px-8 py-8">
         {error && <p className="text-center text-red-400">{error}</p>}
-        <DocumentList 
-          documents={documents} 
-          onDocumentClick={handleDocumentClick} 
-          apiURL={API_PROXY_URL} 
+        <DocumentList
+          documents={documents}
+          onDocumentClick={handleDocumentClick}
+          apiURL={API_PROXY_URL}
           onTagSelect={handleTagSelect}
           isLoading={isLoading}
           processingDocs={processingDocs}
@@ -214,17 +236,17 @@ export default function HomePage() {
             <p className="text-center text-gray-400">No documents found.</p>
         )}
         {!isLoading && (
-          <Pagination 
-            currentPage={currentPage} 
-            totalPages={totalPages} 
-            onPageChange={setCurrentPage} 
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
           />
         )}
       </main>
       {selectedDoc && (
-        <ImageModal 
-          doc={selectedDoc} 
-          onClose={() => setSelectedDoc(null)} 
+        <ImageModal
+          doc={selectedDoc}
+          onClose={() => setSelectedDoc(null)}
           apiURL={API_PROXY_URL}
           onUpdateAbstractSuccess={handleUpdateAbstractSuccess}
         />

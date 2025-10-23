@@ -57,6 +57,11 @@ export const TagFilter: React.FC<TagFilterProps> = ({ apiURL, selectedTags, setS
     setSelectedTags(newSelectedTags);
   };
 
+  const handleClearTags = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent dropdown from closing
+    setSelectedTags([]);
+  };
+
   const filteredTags = useMemo(() => {
     return allTags.filter(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [allTags, searchTerm]);
@@ -99,7 +104,17 @@ export const TagFilter: React.FC<TagFilterProps> = ({ apiURL, selectedTags, setS
 
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 w-80 bg-[#282828] border border-gray-600 rounded-lg shadow-lg z-50 p-4">
-          <h3 className="text-lg font-semibold text-white mb-4">Filter by Tags</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-white">Filter by Tags</h3>
+            {selectedTags.length > 0 && (
+               <button
+                  onClick={handleClearTags}
+                  className="px-2 py-0.5 text-xs text-red-400 hover:text-red-300 rounded-md border border-red-400 hover:border-red-300"
+                >
+                  Clear All
+                </button>
+            )}
+          </div>
           <div className="relative mb-4">
             <input
               type="text"
@@ -130,6 +145,12 @@ export const TagFilter: React.FC<TagFilterProps> = ({ apiURL, selectedTags, setS
                   {tag}
                 </button>
               ))}
+               {sortedTags.length === 0 && !searchTerm && (
+                 <p className="text-sm text-gray-500 italic px-1">No tags available.</p>
+               )}
+               {sortedTags.length === 0 && searchTerm && (
+                 <p className="text-sm text-gray-500 italic px-1">No tags match '{searchTerm}'.</p>
+               )}
             </div>
           )}
         </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { SearchBar } from './SearchBar';
 import { AdvancedFilters } from './AdvancedFilters'; 
 import { TagFilter } from './TagFilter';
+import { YearFilter } from './YearFilter';
 
 interface PersonOption {
   value: number;
@@ -11,6 +12,7 @@ interface PersonOption {
 interface HeaderProps {
   onSearch: (searchTerm: string) => void;
   onClearCache: () => void;
+  onClearFilters: () => void; // New prop for clearing filters
   dateFrom: Date | null;
   setDateFrom: (date: Date | null) => void;
   dateTo: Date | null;
@@ -21,20 +23,25 @@ interface HeaderProps {
   setPersonCondition: (condition: 'any' | 'all') => void;
   selectedTags: string[];
   setSelectedTags: (tags: string[]) => void;
+  selectedYears: number[]; // Updated type
+  setSelectedYears: (years: number[]) => void; // Updated type
   apiURL: string;
   onOpenUploadModal: () => void;
   isProcessing: boolean;
+  hasActiveFilters: boolean; // New prop to show/hide clear button
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
-  onSearch, onClearCache, 
+  onSearch, onClearCache, onClearFilters,
   dateFrom, setDateFrom, dateTo, setDateTo, 
   selectedPerson, setSelectedPerson,
   personCondition, setPersonCondition,
   selectedTags, setSelectedTags,
+  selectedYears, setSelectedYears,
   apiURL,
   onOpenUploadModal,
-  isProcessing
+  isProcessing,
+  hasActiveFilters
 }) => (
   <header className="sticky top-0 z-40 bg-[#212121] border-b border-gray-700 px-4 sm:px-6 lg:px-8">
     <div className="flex items-center justify-between h-16">
@@ -53,6 +60,10 @@ export const Header: React.FC<HeaderProps> = ({
           selectedTags={selectedTags}
           setSelectedTags={setSelectedTags}
         />
+        <YearFilter
+          selectedYears={selectedYears}
+          setSelectedYears={setSelectedYears}
+        />
         <AdvancedFilters
           dateFrom={dateFrom}
           setDateFrom={setDateFrom}
@@ -64,6 +75,19 @@ export const Header: React.FC<HeaderProps> = ({
           setPersonCondition={setPersonCondition}
           apiURL={apiURL}
         />
+        {/* Conditional Clear Filters Button */}
+        {hasActiveFilters && (
+          <button
+            onClick={onClearFilters}
+            className="px-3 py-2 bg-gray-700 text-white text-xs font-medium rounded-md hover:bg-red-600 transition flex items-center gap-1"
+            title="Clear all active filters (except search)"
+          >
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="red" strokeWidth={2}>
+                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+             </svg>
+            Clear Filters
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-4">
